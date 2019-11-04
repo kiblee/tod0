@@ -29,6 +29,7 @@ cd tod0
 python setup.py install
 ```
 
+
 Commands
 --------
 `tod0` is envoked with the command `tod` for easier and quicker access.
@@ -49,10 +50,12 @@ You need to get your own Microsoft API key to use `tod0`.
   3. When the Register an application page appears, enter your application's registration information:
      - Name: `tod0`
      - Supported account types: `Accounts in any organizational directory and personal Microsoft accounts`
-     - Redirect URI (optional): `Web`, `https://localhost/login/authorized`
-     - Treat application as a public client: `Yes`
-  4. When finished, select Register and take note of the application (client) id. 
-  5. Select your newly registered app and in the left-hand navigation pane, select `Certificates & secrets`.
-  6. Click `New client secret` and create a secret key.
-  7. Copy the application id and secret key to `~/.config/tod0/keys.yml`. Make sure to copy the secret key before leaving the page as you will not be able to view it again once you leave.
+     - Platform configuration: `Client Application`
+  4. Click `Register` when finished.
+  5. You will be redirected to the app's authentication page. Under `Platform configurations` click `Add a platform`. 
+  6. Select `Web` and enter `https://localhost/login/authorized` for the `Redirect URI` and click `Configure`.
+  
+  7. Next, in the left-hand navigation pane, select `Certificates & secrets`.
+  6. Click `New client secret` and create a secret key. You may use any description. Click `Add`. Make sure to copy the secret key somewhere before leaving the page as you will not be able to view it again.
+  7. In the left-hand navigation pane, select `Overview`. Copy the `application (client) id` and the `secret key` from the previous step to `~/.config/tod0/keys.yml`. 
   
