@@ -1,3 +1,5 @@
+import os
+import pickle
 import click
 from todocli import auth
 
@@ -37,7 +39,9 @@ def list(all_, filter_, folders):
             break
 
     # Print results
-    for t in tasks:
+    results = {}
+    for idx, t in enumerate(tasks):
+        id_ = t["id"]
         subject = t["subject"]
         status = t["status"]
         folder = t["parentFolderId"]
@@ -45,12 +49,33 @@ def list(all_, filter_, folders):
         # This is a bug in Graph API. Deleted tasks/folders are being returned.
         if folder in id2name:
             click.echo(
-                " {:<20}\t{:<20}\t{}".format(
+                " {}   {:<20}\t{:<20}\t{}".format(
+                    click.style(str(idx)),
                     click.style("ongoing", fg="green"),
                     click.style(id2name[folder], fg="blue"),
                     subject,
                 )
             )
+            results[str(idx)] = t
+
+    # Save results for use in other commands
+    with open(os.path.join(auth.config_dir, "list_results.pkl"), "wb") as f:
+        pickle.dump(results, f)
+
+
+@main.command()
+@click.argument("task_num")
+def delete(task_num):
+    # Load results from list command
+    with open(os.path.join(auth.config_dir, "list_results.pkl"), "rb") as f:
+        results = pickle.load(f)
+
+    if task_num not in results:
+        click.echo("Task {} does not exist.".format(task_num))
+    else:
+        task = results[task_num]
+        if click.confirm("Delete task? {}".format(task["subject"])):
+            auth.delete_task(task["id"])
 
 
 def list_folders():

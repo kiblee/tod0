@@ -145,6 +145,13 @@ def get_folder_mappings():
         return update_folder_mappings()
 
 
+def delete_task(task_id):
+    token = get_token()
+    outlook = OAuth2Session(client_id, scope=scope, token=token)
+    headers = {"Bearer: ": token}
+    o = outlook.delete("{}/tasks/{}".format(base_api_url, task_id))
+
+
 # Code taken from https://docs.microsoft.com/en-us/graph/tutorials/python?tutorial-step=3
 
 # This is necessary because Azure does not guarantee

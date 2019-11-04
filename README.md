@@ -37,6 +37,7 @@ Commands
 `tod` supports the following commands:
 
     list         list tasks or folders
+    delete       delete tasks
  
 Run with `--help`/`-h` for detailed usage.
 
