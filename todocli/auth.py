@@ -111,14 +111,27 @@ def list_tasks(folder=""):
     return parse_contents(o)
 
 
-def list_folders():
+def list_and_update_folders():
     token = get_token()
     outlook = OAuth2Session(client_id, scope=scope, token=token)
     o = outlook.get("{}/taskFolders".format(base_api_url))
-    return parse_contents(o)
+    contents = parse_contents(o)
 
+    # Cache folders
+    name2id = {}
+    id2name = {}
 
-# Folder mapping stuff
+    folders = parse_contents(o)
+    for f in folders:
+        name2id[f["name"]] = f["id"]
+        id2name[f["id"]] = f["name"]
+
+    with open(os.path.join(config_dir, "folder_name2id.pkl"), "wb") as f:
+        pickle.dump(name2id, f)
+    with open(os.path.join(config_dir, "folder_id2name.pkl"), "wb") as f:
+        pickle.dump(id2name, f)
+
+    return contents
 
 
 def get_folder_mappings():
@@ -130,23 +143,6 @@ def get_folder_mappings():
         return (name2id, id2name)
     except Exception:
         return update_folder_mappings()
-
-
-def update_folder_mappings():
-    name2id = {}
-    id2name = {}
-
-    folders = list_folders()
-    for f in folders:
-        name2id[f["name"]] = f["id"]
-        id2name[f["id"]] = f["name"]
-
-    with open(os.path.join(config_dir, "folder_name2id.pkl"), "wb") as f:
-        pickle.dump(name2id, f)
-    with open(os.path.join(config_dir, "folder_id2name.pkl"), "wb") as f:
-        pickle.dump(id2name, f)
-
-    return (name2id, id2name)
 
 
 # Code taken from https://docs.microsoft.com/en-us/graph/tutorials/python?tutorial-step=3
