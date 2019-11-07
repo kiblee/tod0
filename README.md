@@ -36,8 +36,11 @@ Commands
 
 `tod` supports the following commands:
 
+    complete     mark task as completed
+    create       create a task
+    delete       delete a task
     list         list tasks or folders
-    delete       delete tasks
+    
  
 Run with `--help`/`-h` for detailed usage.
 
