@@ -75,7 +75,30 @@ def delete(task_num):
     else:
         task = results[task_num]
         if click.confirm("Delete task? {}".format(task["subject"])):
-            auth.delete_task(task["id"])
+            ok = auth.delete_task(task["id"])
+            if ok:
+                click.echo("Done.")
+            else:
+                click.echo("Oops, something went wrong.")
+
+
+@main.command()
+@click.argument("task_num")
+def complete(task_num):
+    # Load results from list command
+    with open(os.path.join(auth.config_dir, "list_results.pkl"), "rb") as f:
+        results = pickle.load(f)
+
+    if task_num not in results:
+        click.echo("Task {} does not exist.".format(task_num))
+    else:
+        task = results[task_num]
+        if click.confirm("Mark task as complete? {}".format(task["subject"])):
+            ok = auth.complete_task(task["id"])
+            if ok:
+                click.echo("Done.")
+            else:
+                click.echo("Oops, something went wrong.")
 
 
 def list_folders():

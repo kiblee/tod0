@@ -142,14 +142,21 @@ def get_folder_mappings():
             id2name = pickle.load(f)
         return (name2id, id2name)
     except Exception:
-        return update_folder_mappings()
+        return list_and_update_folders()
 
 
 def delete_task(task_id):
     token = get_token()
     outlook = OAuth2Session(client_id, scope=scope, token=token)
-    headers = {"Bearer: ": token}
     o = outlook.delete("{}/tasks/{}".format(base_api_url, task_id))
+    return o.ok
+
+
+def complete_task(task_id):
+    token = get_token()
+    outlook = OAuth2Session(client_id, scope=scope, token=token)
+    o = outlook.post("{}/tasks/{}/complete".format(base_api_url, task_id))
+    return o.ok
 
 
 # Code taken from https://docs.microsoft.com/en-us/graph/tutorials/python?tutorial-step=3
