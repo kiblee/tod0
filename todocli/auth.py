@@ -101,12 +101,10 @@ def list_tasks(folder=""):
     if folder == "":
         o = outlook.get("{}/tasks?filter=status ne 'completed'".format(base_api_url))
     else:
-        (name2id, _) = get_folder_mappings()
         o = outlook.get(
             "{}/taskFolders/{}/tasks?filter=status ne 'completed'".format(
-                base_api_url, name2id[folder]
-            )
-        )
+                base_api_url, folder
+            ))
 
     return parse_contents(o)
 
@@ -134,15 +132,21 @@ def list_and_update_folders():
     return contents
 
 
-def get_folder_mappings():
-    try:
-        with open(os.path.join(config_dir, "folder_name2id.pkl"), "rb") as f:
-            name2id = pickle.load(f)
-        with open(os.path.join(config_dir, "folder_id2name.pkl"), "rb") as f:
-            id2name = pickle.load(f)
-        return (name2id, id2name)
-    except Exception:
-        return list_and_update_folders()
+def create_task(text, folder=None):
+    """Create task with subject `text`"""
+    token = get_token()
+    outlook = OAuth2Session(client_id, scope=scope, token=token)
+
+    # Fill request body
+    request_body = {}
+    request_body["subject"] = text
+
+    if folder is None:
+        o = outlook.post("{}/tasks".format(base_api_url), json=request_body)
+    else:
+        o = outlook.post("{}/taskFolders/{}/tasks".format(base_api_url, folder), json=request_body)
+
+    return o.ok
 
 
 def delete_task(task_id):

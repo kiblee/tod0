@@ -27,18 +27,7 @@ def list(all_, filter_, folders):
     if filter_ == "":
         tasks = auth.list_tasks()
     else:
-        tasks = auth.list_tasks(filter_)
-
-    (name2id, id2name) = auth.get_folder_mappings()
-
-    # Check if folder names are up-to-date
-    for t in tasks:
-        folder = t["parentFolderId"]
-        if folder not in id2name:
-            # Get updated mappings
-            auth.list_and_update_folders()
-            (name2id, id2name) = auth.get_folder_mappings()
-            break
+        tasks = auth.list_tasks(folder2id(filter_))
 
     # Print results
     results = {}
@@ -46,23 +35,45 @@ def list(all_, filter_, folders):
         id_ = t["id"]
         subject = t["subject"]
         status = t["status"]
-        folder = t["parentFolderId"]
+        folder_id = t["parentFolderId"]
 
-        # This is a bug in Graph API. Deleted tasks/folders are being returned.
-        if folder in id2name:
-            click.echo(
-                " {}   {:<20}\t{:<20}\t{}".format(
-                    click.style(str(idx)),
-                    click.style("ongoing", fg="green"),
-                    click.style(id2name[folder], fg="blue"),
-                    subject,
-                )
+        click.echo(
+            " {}   {:<20}\t{:<20}\t{}".format(
+                click.style(str(idx)),
+                click.style("ongoing", fg="green"),
+                click.style(id2folder(folder_id), fg="blue"),
+                subject,
             )
-            results[str(idx)] = t
+        )
+        results[str(idx)] = t
 
     # Save results for use in other commands
     with open(os.path.join(auth.config_dir, "list_results.pkl"), "wb") as f:
         pickle.dump(results, f)
+
+
+@main.command(short_help="create a task")
+@click.option(
+    "--filter", "-f", "filter_", default="", help="target folder"
+)
+@click.argument("subject", required=True)
+def create(subject, filter_):
+    """create task with subject SUBJECT."""
+
+    if not filter_:
+        ok = auth.create_task(subject)
+    else:
+        folder_id = folder2id(filter_)
+        if folder_id is None:
+            click.echo("Folder {} does not exist.".format(filter_), err=True)
+            return
+        else:
+            ok = auth.create_task(subject, folder_id)
+
+    if ok:
+        click.echo("New task created: {}".format(subject))
+    else:
+        click.echo("Oops, something went wrong.")
 
 
 @main.command(short_help="delete a task")
@@ -107,8 +118,45 @@ def complete(task_num):
                 click.echo("Oops, something went wrong.")
 
 
+def folder2id(folder):
+    """Maps folder name to id"""
+
+    cache_path = os.path.join(auth.config_dir, "folder_name2id.pkl")
+    if not os.path.isfile(cache_path):
+        auth.list_and_update_folders()
+
+    with open(cache_path, "rb") as f:
+        name2id = pickle.load(f)
+
+    # Update cache if folder doesn't exist
+    if folder not in name2id:
+        auth.list_and_update_folders()
+        with open(cache_path, "rb") as f:
+            name2id = pickle.load(f)
+
+    return name2id.get(folder)
+
+
+def id2folder(id_):
+    """Maps id to folder name"""
+
+    cache_path = os.path.join(auth.config_dir, "folder_id2name.pkl")
+    if not os.path.isfile(cache_path):
+        auth.list_and_update_folders()
+
+    with open(cache_path, "rb") as f:
+        id2name = pickle.load(f)
+
+    # Update cache if id doesn't exist
+    if id_ not in id2name:
+        auth.list_and_update_folders()
+        with open(cache_path, "rb") as f:
+            id2name = pickle.load(f)
+
+    return id2name.get(id_)
+
+
 def list_folders():
     folders = auth.list_and_update_folders()
     for f in folders:
-        print(f)
         click.echo(click.style(f["name"], fg="blue"))
