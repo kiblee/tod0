@@ -25,9 +25,9 @@ def list(all_, filter_, folders):
         return
 
     if filter_ == "":
-        tasks = auth.list_tasks()
+        tasks = auth.list_tasks(all_=all_)
     else:
-        tasks = auth.list_tasks(folder2id(filter_))
+        tasks = auth.list_tasks(all_=all_, folder=folder2id(filter_))
 
     # Print results
     results = {}
@@ -40,7 +40,7 @@ def list(all_, filter_, folders):
         click.echo(
             " {}   {:<20}\t{:<20}\t{}".format(
                 click.style(str(idx)),
-                click.style("ongoing", fg="green"),
+                click.style(status, fg="green"),
                 click.style(id2folder(folder_id), fg="blue"),
                 subject,
             )

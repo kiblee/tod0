@@ -94,17 +94,26 @@ def parse_contents(response):
     return json.loads(response.content.decode())["value"]
 
 
-def list_tasks(folder=""):
+def list_tasks(all_=False, folder=""):
     token = get_token()
     outlook = OAuth2Session(client_id, scope=scope, token=token)
 
     if folder == "":
-        o = outlook.get("{}/tasks?filter=status ne 'completed'".format(base_api_url))
+        if all_:
+            o = outlook.get("{}/tasks".format(base_api_url))
+        else:
+            o = outlook.get("{}/tasks?filter=status ne 'completed'".format(base_api_url))
     else:
-        o = outlook.get(
-            "{}/taskFolders/{}/tasks?filter=status ne 'completed'".format(
-                base_api_url, folder
-            ))
+        if all_:
+            o = outlook.get(
+                "{}/taskFolders/{}/tasks".format(
+                    base_api_url, folder
+                ))
+        else:
+            o = outlook.get(
+                "{}/taskFolders/{}/tasks?filter=status ne 'completed'".format(
+                    base_api_url, folder
+                ))
 
     return parse_contents(o)
 
