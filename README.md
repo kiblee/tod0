@@ -45,6 +45,41 @@ Commands
 Run with `--help`/`-h` for detailed usage.
 
 
+Examples
+--------
+```console
+me@ubuntu:~$ tod list
+ 0   notStarted 	Tasks      	Change oil
+ 1   notStarted 	Tasks      	Order lamp
+ 2   notStarted 	Tasks      	Buy coffee
+
+me@ubuntu:~$ tod list -f Work
+ 0   notStarted 	Work      	Fix issue
+ 1   notStarted 	Work      	Create bug
+ 
+me@ubuntu:~$ tod create -f Work "Find computer"
+New task created. Find computer
+ 
+me@ubuntu:~$ tod list -f Work
+ 0   notStarted 	Work      	Fix issue
+ 1   notStarted 	Work      	Create bug
+ 2   notStarted 	Work      	Find computer
+ 
+me@ubuntu:~$ tod complete 0
+ Done.
+ 
+me@ubuntu:~$ tod delete 1 
+ Done.
+ 
+me@ubuntu:~$ tod list -f Work
+ 0   notStarted 	Work      	Find computer
+ 
+me@ubuntu:~$ tod list -f Work -a
+ 0   completed  	Work      	Fix issue
+ 1   notStarted 	Work      	Find computer
+```
+
+
 Getting your own API key
 ------------------------
 
