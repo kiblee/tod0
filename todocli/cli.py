@@ -41,7 +41,7 @@ def list(all_, filter_, folders):
             " {}   {:<20}\t{:<20}\t{}".format(
                 click.style(str(idx)),
                 click.style(status, fg="green"),
-                click.style(id2folder(folder_id), fg="blue"),
+                click.style(id2folder(folder_id) or "-", fg="blue"),
                 subject,
             )
         )
