@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="tod0",
-    version="0.1.0rc1",
+    version="0.1.0",
     author="kiblee",
     author_email="kiblee@pm.me",
     packages=["todocli", "todocli.test"],
@@ -16,4 +16,5 @@ setuptools.setup(
         [console_scripts]
         tod=todocli.cli:main
     """,
+    python_requires=">=3.6",
 )
