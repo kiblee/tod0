@@ -9,7 +9,6 @@ setuptools.setup(
     url="https://github.com/kiblee/tod0",
     license="LICENSE",
     description="A CLI for Microsoft To-Do.",
-    long_description=open("README.md").read(),
     install_requires=["Click", "pyyaml", "requests", "requests_oauthlib",],
     include_package_data=True,
     entry_points="""
