@@ -15,6 +15,8 @@ You can view, add, edit, and delete your tasks without leaving your terminal.
 Installation
 ------------
 
+***Remember to [register for an API key](https://github.com/kiblee/tod0#getting-your-own-api-key) before using `tod0`***
+
 ### Install from PyPI
 
 ```sh
