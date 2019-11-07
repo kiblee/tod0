@@ -100,17 +100,19 @@ def list_tasks(all_=False, folder=""):
 
     if folder == "":
         if all_:
-            o = outlook.get("{}/tasks".format(base_api_url))
+            o = outlook.get("{}/tasks?top=100".format(base_api_url))
         else:
             o = outlook.get(
-                "{}/tasks?filter=status ne 'completed'".format(base_api_url)
+                "{}/tasks?filter=status ne 'completed'&top=100".format(base_api_url)
             )
     else:
         if all_:
-            o = outlook.get("{}/taskFolders/{}/tasks".format(base_api_url, folder))
+            o = outlook.get(
+                "{}/taskFolders/{}/tasks?top=100".format(base_api_url, folder)
+            )
         else:
             o = outlook.get(
-                "{}/taskFolders/{}/tasks?filter=status ne 'completed'".format(
+                "{}/taskFolders/{}/tasks?filter=status ne 'completed'&top=100".format(
                     base_api_url, folder
                 )
             )
