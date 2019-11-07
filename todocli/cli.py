@@ -9,7 +9,7 @@ def main():
     pass
 
 
-@main.command()
+@main.command(short_help="list tasks or folders" )
 @click.option(
     "--all", "-a", "all_", is_flag=True, help="List all tasks including completed ones"
 )
@@ -18,6 +18,8 @@ def main():
 )
 @click.option("--folders", is_flag=True, help="List folders")
 def list(all_, filter_, folders):
+    """List tasks/folders."""
+
     if folders:
         list_folders()
         return
@@ -63,9 +65,11 @@ def list(all_, filter_, folders):
         pickle.dump(results, f)
 
 
-@main.command()
+@main.command(short_help="delete a task")
 @click.argument("task_num")
 def delete(task_num):
+    """Delete task with id TASK_NUM."""
+
     # Load results from list command
     with open(os.path.join(auth.config_dir, "list_results.pkl"), "rb") as f:
         results = pickle.load(f)
@@ -82,9 +86,11 @@ def delete(task_num):
                 click.echo("Oops, something went wrong.")
 
 
-@main.command()
+@main.command(short_help="mark task as completed")
 @click.argument("task_num")
 def complete(task_num):
+    """Mark task TASK_NUM as completed."""
+
     # Load results from list command
     with open(os.path.join(auth.config_dir, "list_results.pkl"), "rb") as f:
         results = pickle.load(f)
