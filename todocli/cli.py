@@ -9,7 +9,7 @@ def main():
     pass
 
 
-@main.command(short_help="list tasks or folders" )
+@main.command(short_help="list tasks or folders")
 @click.option(
     "--all", "-a", "all_", is_flag=True, help="List all tasks including completed ones"
 )
@@ -53,9 +53,7 @@ def list(all_, filter_, folders):
 
 
 @main.command(short_help="create a task")
-@click.option(
-    "--filter", "-f", "filter_", default="", help="target folder"
-)
+@click.option("--filter", "-f", "filter_", default="", help="target folder")
 @click.argument("subject", required=True)
 def create(subject, filter_):
     """create task with subject SUBJECT."""

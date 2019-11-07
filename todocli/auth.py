@@ -102,18 +102,18 @@ def list_tasks(all_=False, folder=""):
         if all_:
             o = outlook.get("{}/tasks".format(base_api_url))
         else:
-            o = outlook.get("{}/tasks?filter=status ne 'completed'".format(base_api_url))
+            o = outlook.get(
+                "{}/tasks?filter=status ne 'completed'".format(base_api_url)
+            )
     else:
         if all_:
-            o = outlook.get(
-                "{}/taskFolders/{}/tasks".format(
-                    base_api_url, folder
-                ))
+            o = outlook.get("{}/taskFolders/{}/tasks".format(base_api_url, folder))
         else:
             o = outlook.get(
                 "{}/taskFolders/{}/tasks?filter=status ne 'completed'".format(
                     base_api_url, folder
-                ))
+                )
+            )
 
     return parse_contents(o)
 
@@ -153,7 +153,9 @@ def create_task(text, folder=None):
     if folder is None:
         o = outlook.post("{}/tasks".format(base_api_url), json=request_body)
     else:
-        o = outlook.post("{}/taskFolders/{}/tasks".format(base_api_url, folder), json=request_body)
+        o = outlook.post(
+            "{}/taskFolders/{}/tasks".format(base_api_url, folder), json=request_body
+        )
 
     return o.ok
 
