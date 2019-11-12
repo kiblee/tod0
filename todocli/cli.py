@@ -1,6 +1,7 @@
 import os
 import pickle
 import click
+import webbrowser
 from todocli import auth
 
 
@@ -114,6 +115,24 @@ def complete(task_num):
                 click.echo("Done.")
             else:
                 click.echo("Oops, something went wrong.")
+
+
+@main.command(short_help="logout")
+def logout():
+    """Logout current user."""
+
+    if click.confirm("Logout?"):
+        try:
+            # Remove all user-related data
+            os.remove(os.path.join(auth.config_dir, "token.pkl"))
+            os.remove(os.path.join(auth.config_dir, "folder_id2name.pkl"))
+            os.remove(os.path.join(auth.config_dir, "folder_name2id.pkl"))
+            os.remove(os.path.join(auth.config_dir, "list_results.pkl"))
+        except Exception as e:
+            print(e)
+
+        webbrowser.open("https://login.microsoftonline.com/common/oauth2/v2.0/logout")
+        print("Logged out.")
 
 
 def folder2id(folder):
