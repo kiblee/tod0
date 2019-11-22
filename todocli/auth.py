@@ -144,6 +144,28 @@ def list_and_update_folders():
     return contents
 
 
+def create_folder(name):
+    """Create folder with name `name`"""
+    token = get_token()
+    outlook = OAuth2Session(client_id, scope=scope, token=token)
+
+    # Fill request body
+    request_body = {}
+    request_body["name"] = name
+
+    o = outlook.post("{}/taskFolders".format(base_api_url), json=request_body)
+
+    return o.ok
+
+
+def delete_folder(folder_id):
+    """Delete folder with id `folder_id`"""
+    token = get_token()
+    outlook = OAuth2Session(client_id, scope=scope, token=token)
+    o = outlook.delete("{}/taskFolders/{}".format(base_api_url, folder_id))
+    return o.ok
+
+
 def create_task(text, folder=None):
     """Create task with subject `text`"""
     token = get_token()
