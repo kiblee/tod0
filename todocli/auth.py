@@ -25,6 +25,11 @@ def check_keys(keys):
                 os.path.join(config_dir, "keys.yml")
             )
         )
+        print(
+            "Instructions to getting your API client id and secret can be found here:\n{}".format(
+                "https://github.com/kiblee/tod0#getting-your-own-api-key"
+            )
+        )
         exit()
 
 
