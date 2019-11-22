@@ -10,20 +10,52 @@ def main():
     pass
 
 
-@main.command(short_help="list tasks or folders")
+@main.command(short_help="actions for folders")
+@click.option("--list", "-l", "list_", is_flag=True, help="list folders")
+@click.option("--create", "-c", help="create a folder")
+@click.option("--delete", "-d", help="delete a folder")
+def folder(list_, create, delete):
+    """Actions for folders"""
+
+    if not (list_ or create or delete):
+        ctx = click.get_current_context()
+        click.echo(ctx.get_help())
+        ctx.exit()
+
+    if list_:
+        list_folders()
+    elif create:
+        ok = auth.create_folder(create)
+        if ok:
+            click.echo("New folder created: {}".format(create))
+        else:
+            click.echo("Oops, something went wrong.")
+    elif delete:
+        # Load results from list command
+        with open(os.path.join(auth.config_dir, "list_results_folders.pkl"), "rb") as f:
+            results = pickle.load(f)
+
+        if delete not in results:
+            click.echo("Folder {} does not exist.".format(delete))
+        else:
+            fldr = results[delete]
+            if click.confirm("Delete folder? {}".format(fldr["name"])):
+                ok = auth.delete_folder(folder2id(fldr["name"]))
+                if ok:
+                    click.echo("Done.")
+                else:
+                    click.echo("Oops, something went wrong.")
+
+
+@main.command(short_help="list tasks")
 @click.option(
     "--all", "-a", "all_", is_flag=True, help="List all tasks including completed ones"
 )
 @click.option(
     "--filter", "-f", "filter_", default="", help="List tasks from specific folder"
 )
-@click.option("--folders", is_flag=True, help="List folders")
-def list(all_, filter_, folders):
-    """List tasks/folders."""
-
-    if folders:
-        list_folders()
-        return
+def list(all_, filter_):
+    """List tasks"""
 
     if filter_ == "":
         tasks = auth.list_tasks(all_=all_)
@@ -175,5 +207,17 @@ def id2folder(id_):
 
 def list_folders():
     folders = auth.list_and_update_folders()
-    for f in folders:
-        click.echo(click.style(f["name"], fg="blue"))
+
+    # Print results
+    results = {}
+    for idx, f in enumerate(folders):
+        click.echo(
+            " {}   {:<20}".format(
+                click.style(str(idx)), click.style(f["name"], fg="blue"),
+            )
+        )
+        results[str(idx)] = f
+
+    # Save results for use in other commands
+    with open(os.path.join(auth.config_dir, "list_results_folders.pkl"), "wb") as f:
+        pickle.dump(results, f)
