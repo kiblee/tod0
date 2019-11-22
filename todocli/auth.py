@@ -59,10 +59,6 @@ def get_token():
             authorization_response=redirect_response,
         )
 
-        # Fetch a protected resource, i.e. calendar information
-        # o = outlook.get('{}/tasks'.format(base_api_url))
-        # print(o.content)
-
     store_token(token)
     return token
 
