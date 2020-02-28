@@ -1,7 +1,7 @@
 tod0
 ====
 
-A CLI for Microsoft To Do
+A Terminal Client for Microsoft To-Do.
 
 [![CircleCI](https://circleci.com/gh/kiblee/tod0.svg?style=svg&circle-token=7c223e0b25b7428107e841926315e74478cacb55)](https://circleci.com/gh/kiblee/tod0)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
@@ -34,52 +34,12 @@ python setup.py install
 
 Commands
 --------
-`tod0` is envoked with the command `tod` for easier and quicker access.
+Run `tod0` from anywhere on your terminal.
 
-`tod` supports the following commands:
-
-    complete     mark task as completed
-    create       create a task
-    delete       delete a task
-    list         list tasks or folders
-    
+    j       Move down
+    k       Move up
+    Enter   Select
  
-Run with `--help`/`-h` for detailed usage.
-
-
-Examples
---------
-```console
-me@ubuntu:~$ tod list
- 0   notStarted 	Tasks      	Change oil
- 1   notStarted 	Tasks      	Order lamp
- 2   notStarted 	Tasks      	Buy coffee
-
-me@ubuntu:~$ tod list -f Work
- 0   notStarted 	Work      	Fix issue
- 1   notStarted 	Work      	Create bug
- 
-me@ubuntu:~$ tod create -f Work "Find computer"
-New task created. Find computer
- 
-me@ubuntu:~$ tod list -f Work
- 0   notStarted 	Work      	Fix issue
- 1   notStarted 	Work      	Create bug
- 2   notStarted 	Work      	Find computer
- 
-me@ubuntu:~$ tod complete 0
- Done.
- 
-me@ubuntu:~$ tod delete 1 
- Done.
- 
-me@ubuntu:~$ tod list -f Work
- 0   notStarted 	Work      	Find computer
- 
-me@ubuntu:~$ tod list -f Work -a
- 0   completed  	Work      	Fix issue
- 1   notStarted 	Work      	Find computer
-```
 
 
 Getting your own API key
