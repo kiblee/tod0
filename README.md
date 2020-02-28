@@ -9,8 +9,8 @@ A Terminal Client for Microsoft To-Do.
 #### Microsoft To Do Command Line Interface
 
 `tod0` lets you use [Microsoft To Do](https://todo.microsoft.com/) from the command line. 
-You can view, add, edit, and delete your tasks without leaving your terminal. 
 
+<p align="center"><img src="/demo-min.gif?raw=true"/></p>
 
 Installation
 ------------
