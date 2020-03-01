@@ -41,3 +41,9 @@ Run `tod0` from anywhere on your terminal.
     Enter   Select
  
 
+Features
+--------
+- View folders and tasks
+- Complete tasks (Coming soon)
+- Delete tasks (Coming soon)
+- Create tasks (Coming soon)
