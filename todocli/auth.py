@@ -79,10 +79,7 @@ def refresh_token(token):
             client_id, token=token, scope=scope, redirect_uri=redirect
         )
 
-        refresh_params = {
-            "client_id": client_id,
-            "client_secret": client_secret,
-        }
+        refresh_params = {"client_id": client_id, "client_secret": client_secret}
 
         new_token = aad_auth.refresh_token(token_url, **refresh_params)
         return new_token

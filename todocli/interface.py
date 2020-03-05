@@ -10,6 +10,7 @@ from todocli import auth
 
 # Colors
 color_folder = "bg:#006699"
+color_task = "bg:#006699"
 
 focus_index_folder = 0
 focus_index_task = 0
@@ -46,9 +47,7 @@ body = VSplit(
 
 
 def get_titlebar_text():
-    return [
-        ("class:title", " tod0 "),
-    ]
+    return [("class:title", " tod0 ")]
 
 
 root_container = HSplit(
@@ -85,6 +84,7 @@ def _(event):
     """
     Move selection down 1
     """
+
     if focus_folder:
         global focus_index_folder
         folders[focus_index_folder].style = ""
@@ -94,19 +94,25 @@ def _(event):
         global focus_index_task
         tasks[focus_index_task].style = ""
         focus_index_task = (focus_index_task + 1) % len(tasks)
-        tasks[focus_index_task].style = color_folder
+        tasks[focus_index_task].style = color_task
 
 
 @kb.add("k")
 def _(event):
     """
-    Move folder selection up 1
+    Move selection up 1
     """
-    global focus_index_folder
-    folders[focus_index_folder].style = ""
-    focus_index_folder = (focus_index_folder - 1) % len(folders)
-    # event.app.layout.focus(task_categories[focus_index_folder])
-    folders[focus_index_folder].style = color_folder
+
+    if focus_folder:
+        global focus_index_folder
+        folders[focus_index_folder].style = ""
+        focus_index_folder = (focus_index_folder - 1) % len(folders)
+        folders[focus_index_folder].style = color_folder
+    else:
+        global focus_index_task
+        tasks[focus_index_task].style = ""
+        focus_index_task = (focus_index_task - 1) % len(tasks)
+        tasks[focus_index_task].style = color_task
 
 
 @kb.add("c-m")
@@ -117,6 +123,7 @@ def _(event):
     """
 
     global focus_folder
+    global focus_index_task
     global tasks
 
     task_data = auth.list_tasks(
@@ -131,17 +138,29 @@ def _(event):
         status = t["status"]
         folder_id = t["parentFolderId"]
         tasks.append(Window(FormattedTextControl(subject), height=1))
+        # print(t)
 
     # Add empty container if task list is empty
     if not tasks:
         right_window.children = [Window(FormattedTextControl("-- No Tasks --"))]
     else:
         right_window.children = tasks
-        # tasks[0].style="bg:#aabbcc"
-
-    # focus_folder = False
+        focus_index_task = 0
+        tasks[focus_index_task].style = color_task
+        focus_folder = False
 
     # results[str(idx)] = t
+
+
+@kb.add("h")
+def _(event):
+    """
+    Go back to folder scroll mode
+    """
+    global focus_index_task
+    global focus_folder
+    tasks[focus_index_task].style = ""
+    focus_folder = True
 
 
 # Creating an `Application` instance
