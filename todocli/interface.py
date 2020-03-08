@@ -1,10 +1,22 @@
 #!/usr/bin/env python
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout.containers import HSplit, VSplit, Window, WindowAlign
+from prompt_toolkit.key_binding import (
+    KeyBindings,
+    ConditionalKeyBindings,
+    merge_key_bindings,
+)
+from prompt_toolkit.filters import Condition
+from prompt_toolkit.layout.containers import (
+    HSplit,
+    VSplit,
+    Window,
+    WindowAlign,
+    DynamicContainer,
+)
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.widgets import TextArea
 
 from todocli import auth
 
@@ -16,11 +28,22 @@ focus_index_folder = 0
 focus_index_task = 0
 focus_folder = True
 
+# Confirmation stuff
+waiting_for_confirmation = False
+
+
+@Condition
+def is_not_waiting_for_confirmation():
+    "Enable key bindings when not waiting for confirmation"
+    return not waiting_for_confirmation
+
 
 # Get list of folders
 folder2id = {}
 folders = []
+task2id = {}
 tasks = []
+
 
 folder_data = auth.list_and_update_folders()
 for idx, f in enumerate(folder_data):
@@ -50,6 +73,10 @@ def get_titlebar_text():
     return [("class:title", " tod0 ")]
 
 
+prompt_window = Window(
+    height=1, content=FormattedTextControl(""), align=WindowAlign.LEFT
+)
+
 root_container = HSplit(
     [
         # The titlebar.
@@ -62,16 +89,19 @@ root_container = HSplit(
         Window(height=1, char="-", style="class:line"),
         # The 'body', like defined above.
         body,
+        Window(height=1, char=".", style="class:line"),
+        DynamicContainer(lambda: prompt_window),
     ]
 )
 
 
 # Key bindings
 kb = KeyBindings()
+kb_exit = KeyBindings()
 
 
-@kb.add("c-c", eager=True)
-@kb.add("c-q", eager=True)
+@kb_exit.add("c-c", eager=True)
+@kb_exit.add("c-q", eager=True)
 def _(event):
     """
     Pressing Ctrl-Q or Ctrl-C will exit the user interface.
@@ -115,41 +145,12 @@ def _(event):
         tasks[focus_index_task].style = color_task
 
 
-@kb.add("c-m")
 @kb.add("l")
 def _(event):
     """
     Select currently focused folder
     """
-
-    global focus_folder
-    global focus_index_task
-    global tasks
-
-    task_data = auth.list_tasks(
-        all_=False, folder=folder2id[folders[focus_index_folder].content.text]
-    )
-
-    # results = {}
-    tasks = []
-    for idx, t in enumerate(task_data):
-        id_ = t["id"]
-        subject = t["subject"]
-        status = t["status"]
-        folder_id = t["parentFolderId"]
-        tasks.append(Window(FormattedTextControl(subject), height=1))
-        # print(t)
-
-    # Add empty container if task list is empty
-    if not tasks:
-        right_window.children = [Window(FormattedTextControl("-- No Tasks --"))]
-    else:
-        right_window.children = tasks
-        focus_index_task = 0
-        tasks[focus_index_task].style = color_task
-        focus_folder = False
-
-    # results[str(idx)] = t
+    load_tasks()
 
 
 @kb.add("h")
@@ -163,11 +164,85 @@ def _(event):
     focus_folder = True
 
 
+@kb.add("c")
+def _(event):
+    """
+    Mark task as complete
+    """
+    global waiting_for_confirmation
+    global prompt_window
+
+    waiting_for_confirmation = True
+
+    input_field = TextArea(
+        height=1,
+        prompt="Mark task as complete? <y> to confirm. ",
+        style="class:input-field",
+        multiline=False,
+        wrap_lines=False,
+    )
+
+    # Confirmation of commands
+    def confirm(buff):
+        global waiting_for_confirmation
+        global prompt_window
+        user_input = input_field.text
+        if user_input == "y":
+            # Mark task as complete
+            auth.complete_task(task2id[focus_index_task])
+            load_tasks()
+
+        # Return to normal state
+        waiting_for_confirmation = False
+        prompt_window = Window()
+
+    input_field.accept_handler = confirm
+
+    prompt_window = input_field
+    event.app.layout.focus(input_field)
+
+
+kb = ConditionalKeyBindings(kb, is_not_waiting_for_confirmation)
+
+
+def load_tasks():
+    """
+    Load tasks of currently focused folder
+    """
+
+    global focus_folder
+    global focus_index_task
+    global tasks
+    global task2id
+
+    task_data = auth.list_tasks(
+        all_=False, folder=folder2id[folders[focus_index_folder].content.text]
+    )
+
+    tasks = []
+    for idx, t in enumerate(task_data):
+        id_ = t["id"]
+        subject = t["subject"]
+        status = t["status"]
+        folder_id = t["parentFolderId"]
+        tasks.append(Window(FormattedTextControl(subject), height=1))
+        task2id[idx] = id_
+
+    # Add empty container if task list is empty
+    if not tasks:
+        right_window.children = [Window(FormattedTextControl("-- No Tasks --"))]
+    else:
+        right_window.children = tasks
+        focus_index_task = 0
+        tasks[focus_index_task].style = color_task
+        focus_folder = False
+
+
 # Creating an `Application` instance
 # ----------------------------------
 application = Application(
     layout=Layout(root_container),
-    key_bindings=kb,
+    key_bindings=merge_key_bindings([kb, kb_exit]),
     mouse_support=False,
     full_screen=False,
 )
