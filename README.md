@@ -36,14 +36,17 @@ Commands
 --------
 Run `tod0` from anywhere on your terminal.
 
-    j       Move down
-    k       Move up
-    Enter   Select
+    j       Move selection down
+    k       Move selection up
+    l       Select folder and view tasks
+    h       Go back to folder
+    
+    n       Create task/folder
+    c       Mark task as complete
  
 
 Features
 --------
 - View folders and tasks
-- Complete tasks (Coming soon)
-- Delete tasks (Coming soon)
-- Create tasks (Coming soon)
+- Create folders and tasks
+- Mark tasks as complete
