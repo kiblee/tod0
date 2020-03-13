@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="tod0",
-    version="0.3.0",
+    version="0.4.0",
     author="kiblee",
     author_email="kiblee@pm.me",
     packages=["todocli", "todocli.test"],
