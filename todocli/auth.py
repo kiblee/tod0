@@ -27,7 +27,7 @@ def check_keys(keys):
         )
         print(
             "Instructions to getting your API client id and secret can be found here:\n{}".format(
-                "https://github.com/kiblee/tod0#getting-your-own-api-key"
+                "https://github.com/kiblee/tod0/blob/master/GET_KEY.md"
             )
         )
         exit()
