@@ -47,7 +47,7 @@ tasks = []
 
 folder_data = auth.list_and_update_folders()
 for idx, f in enumerate(folder_data):
-    folder2id[f["name"]] = f["id"]
+    folder2id[idx] = f["id"]
     folders.append(Window(FormattedTextControl(f["name"]), height=1, width=50))
 
 folders[0].style = color_folder
@@ -202,6 +202,45 @@ def _(event):
     event.app.layout.focus(input_field)
 
 
+@kb.add("n")
+def _(event):
+    """
+    Create new task/folder
+    """
+    global waiting_for_confirmation
+    global prompt_window
+
+    waiting_for_confirmation = True
+
+    input_field = TextArea(
+        height=1,
+        prompt="New task: ",
+        style="class:input-field",
+        multiline=False,
+        wrap_lines=False,
+    )
+
+    # Confirmation of commands
+    def confirm(buff):
+        global waiting_for_confirmation
+        global prompt_window
+        user_input = input_field.text
+        if user_input:
+            # Create new taske
+            auth.create_task(user_input, folder2id[focus_index_folder])
+            # Refresh tasks
+            load_tasks()
+
+        # Return to normal state
+        waiting_for_confirmation = False
+        prompt_window = Window()
+
+    input_field.accept_handler = confirm
+
+    prompt_window = input_field
+    event.app.layout.focus(input_field)
+
+
 kb = ConditionalKeyBindings(kb, is_not_waiting_for_confirmation)
 
 
@@ -215,9 +254,7 @@ def load_tasks():
     global tasks
     global task2id
 
-    task_data = auth.list_tasks(
-        all_=False, folder=folder2id[folders[focus_index_folder].content.text]
-    )
+    task_data = auth.list_tasks(all_=False, folder=folder2id[focus_index_folder])
 
     tasks = []
     for idx, t in enumerate(task_data):
