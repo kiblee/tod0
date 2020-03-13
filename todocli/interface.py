@@ -38,34 +38,50 @@ def is_not_waiting_for_confirmation():
     return not waiting_for_confirmation
 
 
-# Get list of folders
+# Global data structures to hold info
 folder2id = {}
 folders = []
 task2id = {}
 tasks = []
 
 
-folder_data = auth.list_and_update_folders()
-for idx, f in enumerate(folder_data):
-    folder2id[idx] = f["id"]
-    folders.append(Window(FormattedTextControl(f["name"]), height=1, width=50))
+def load_folders():
+    """
+    Load all folders
+    """
+    global left_window
+    global focus_index_folder
+    global folder2id
+    global folders
 
-folders[0].style = color_folder
+    # Reset all folder data structures
+    focus_index_folder = 0
+    folder2id.clear()
+    folders.clear()
 
-left_window = HSplit(folders)
+    # Retrieve folder data
+    folder_data = auth.list_and_update_folders()
+    for idx, f in enumerate(folder_data):
+        folder2id[idx] = f["id"]
+        folders.append(f["name"])
+
+    # Layout interface
+    left_window.children = [
+        Window(FormattedTextControl(f), height=1, width=50) for f in folders
+    ]
+
+    # Highlight first folder
+    left_window.children[0].style = color_folder
+
+
+left_window = HSplit([Window()])
+
+# Get folders to load on screen
+load_folders()
 
 right_window = HSplit([Window()])
-
 body = VSplit(
-    [
-        left_window,
-        # A vertical line in the middle. We explicitly specify the width, to make
-        # sure that the layout engine will not try to divide the whole width by
-        # three for all these windows.
-        Window(width=1, char="|", style="class:line"),
-        # Display the Result buffer on the right.
-        right_window,
-    ]
+    [left_window, Window(width=1, char="|", style="class:line"), right_window,]
 )
 
 
@@ -117,9 +133,10 @@ def _(event):
 
     if focus_folder:
         global focus_index_folder
-        folders[focus_index_folder].style = ""
+        folder_window = left_window.children
+        folder_window[focus_index_folder].style = ""
         focus_index_folder = (focus_index_folder + 1) % len(folders)
-        folders[focus_index_folder].style = color_folder
+        folder_window[focus_index_folder].style = color_folder
     else:
         global focus_index_task
         tasks[focus_index_task].style = ""
@@ -135,9 +152,10 @@ def _(event):
 
     if focus_folder:
         global focus_index_folder
-        folders[focus_index_folder].style = ""
+        folder_window = left_window.children
+        folder_window[focus_index_folder].style = ""
         focus_index_folder = (focus_index_folder - 1) % len(folders)
-        folders[focus_index_folder].style = color_folder
+        folder_window[focus_index_folder].style = color_folder
     else:
         global focus_index_task
         tasks[focus_index_task].style = ""
@@ -160,8 +178,10 @@ def _(event):
     """
     global focus_index_task
     global focus_folder
+    global right_window
     tasks[focus_index_task].style = ""
     focus_folder = True
+    right_window.children = [Window()]
 
 
 @kb.add("c")
@@ -212,30 +232,60 @@ def _(event):
 
     waiting_for_confirmation = True
 
-    input_field = TextArea(
-        height=1,
-        prompt="New task: ",
-        style="class:input-field",
-        multiline=False,
-        wrap_lines=False,
-    )
+    # Check if we are creating new task or folder
+    if focus_folder:
+        # We are creating a new folder
+        input_field = TextArea(
+            height=1,
+            prompt="New folder: ",
+            style="class:input-field",
+            multiline=False,
+            wrap_lines=False,
+        )
 
-    # Confirmation of commands
-    def confirm(buff):
-        global waiting_for_confirmation
-        global prompt_window
-        user_input = input_field.text
-        if user_input:
-            # Create new taske
-            auth.create_task(user_input, folder2id[focus_index_folder])
-            # Refresh tasks
-            load_tasks()
+        # Get new folder name
+        def get_name(buff):
+            global waiting_for_confirmation
+            global prompt_window
+            global left_window
 
-        # Return to normal state
-        waiting_for_confirmation = False
-        prompt_window = Window()
+            user_input = input_field.text
+            if user_input:
+                # Create new folder
+                auth.create_folder(user_input)
+                # Refresh folders
+                load_folders()
 
-    input_field.accept_handler = confirm
+            # Return to normal state
+            waiting_for_confirmation = False
+            prompt_window = Window()
+
+    else:
+        # We are creating a new task
+        input_field = TextArea(
+            height=1,
+            prompt="New task: ",
+            style="class:input-field",
+            multiline=False,
+            wrap_lines=False,
+        )
+
+        # Get new task name
+        def get_name(buff):
+            global waiting_for_confirmation
+            global prompt_window
+            user_input = input_field.text
+            if user_input:
+                # Create new task
+                auth.create_task(user_input, folder2id[focus_index_folder])
+                # Refresh tasks
+                load_tasks()
+
+            # Return to normal state
+            waiting_for_confirmation = False
+            prompt_window = Window()
+
+    input_field.accept_handler = get_name
 
     prompt_window = input_field
     event.app.layout.focus(input_field)

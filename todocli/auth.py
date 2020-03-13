@@ -121,7 +121,7 @@ def list_tasks(all_=False, folder=""):
 def list_and_update_folders():
     token = get_token()
     outlook = OAuth2Session(client_id, scope=scope, token=token)
-    o = outlook.get("{}/taskFolders".format(base_api_url))
+    o = outlook.get("{}/taskFolders?top=20".format(base_api_url))
     contents = parse_contents(o)
 
     # Cache folders
