@@ -14,5 +14,7 @@ You need to get your own Microsoft API key to use `tod0`.
   
   7. Next, in the left-hand navigation pane, select `Certificates & secrets`.
   6. Click `New client secret` and create a secret key. You may use any description. Click `Add`. Make sure to copy the secret key somewhere before leaving the page as you will not be able to view it again.
-  7. In the left-hand navigation pane, select `Overview`. Copy the `application (client) id` and the `secret key` from the previous step to `~/.config/tod0/keys.yml`. 
+  7. In the left-hand navigation pane, select `Overview`. Copy the `application (client) id` and the `secret key` from the previous step to `~/.config/tod0/keys.yml` like so: 
   
+    client_id: '1234abcd-abc-etc-etc'
+    client_secret: 'ABCD-abcd-etc-etc'
