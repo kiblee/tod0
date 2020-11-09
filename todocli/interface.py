@@ -139,9 +139,10 @@ def _(event):
         folder_window[focus_index_folder].style = color_folder
     else:
         global focus_index_task
-        tasks[focus_index_task].style = ""
-        focus_index_task = (focus_index_task + 1) % len(tasks)
-        tasks[focus_index_task].style = color_task
+        if tasks:
+            tasks[focus_index_task].style = ""
+            focus_index_task = (focus_index_task + 1) % len(tasks)
+            tasks[focus_index_task].style = color_task
 
 
 @kb.add("k")
@@ -158,9 +159,10 @@ def _(event):
         folder_window[focus_index_folder].style = color_folder
     else:
         global focus_index_task
-        tasks[focus_index_task].style = ""
-        focus_index_task = (focus_index_task - 1) % len(tasks)
-        tasks[focus_index_task].style = color_task
+        if tasks:
+            tasks[focus_index_task].style = ""
+            focus_index_task = (focus_index_task - 1) % len(tasks)
+            tasks[focus_index_task].style = color_task
 
 
 @kb.add("l")
@@ -168,7 +170,8 @@ def _(event):
     """
     Select currently focused folder
     """
-    load_tasks()
+    if focus_folder:
+        load_tasks()
 
 
 @kb.add("h")
@@ -179,9 +182,11 @@ def _(event):
     global focus_index_task
     global focus_folder
     global right_window
-    tasks[focus_index_task].style = ""
-    focus_folder = True
+
+    if tasks:
+        tasks[focus_index_task].style = ""
     right_window.children = [Window()]
+    focus_folder = True
 
 
 @kb.add("c")
@@ -322,7 +327,7 @@ def load_tasks():
         right_window.children = tasks
         focus_index_task = 0
         tasks[focus_index_task].style = color_task
-        focus_folder = False
+    focus_folder = False
 
 
 # Creating an `Application` instance
