@@ -194,6 +194,11 @@ def _(event):
     """
     Mark task as complete
     """
+
+    # Only receive input on task view mode
+    if focus_folder or (not focus_folder and not tasks):
+        return
+
     global waiting_for_confirmation
     global prompt_window
 
