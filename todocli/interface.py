@@ -114,6 +114,7 @@ root_container = HSplit(
 # Key bindings
 kb = KeyBindings()
 kb_exit = KeyBindings()
+kb_escape = KeyBindings()
 
 
 @kb_exit.add("c-c", eager=True)
@@ -301,6 +302,20 @@ def _(event):
     event.app.layout.focus(input_field)
 
 
+@kb_escape.add("escape", eager=True)
+def _(event):
+    """
+    Escape prompt
+    """
+    global waiting_for_confirmation
+    global prompt_window
+
+    # Return to normal state
+    waiting_for_confirmation = False
+    prompt_window = Window()
+
+
+
 kb = ConditionalKeyBindings(kb, is_not_waiting_for_confirmation)
 
 
@@ -339,7 +354,7 @@ def load_tasks():
 # ----------------------------------
 application = Application(
     layout=Layout(root_container),
-    key_bindings=merge_key_bindings([kb, kb_exit]),
+    key_bindings=merge_key_bindings([kb, kb_exit, kb_escape]),
     mouse_support=False,
     full_screen=False,
 )
