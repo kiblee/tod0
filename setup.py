@@ -9,7 +9,12 @@ setuptools.setup(
     url="https://github.com/kiblee/tod0",
     license="LICENSE",
     description="A Terminal Client for Microsoft To-Do.",
-    install_requires=["prompt-toolkit", "pyyaml", "requests", "requests_oauthlib",],
+    install_requires=[
+        "prompt-toolkit",
+        "pyyaml",
+        "requests",
+        "requests_oauthlib",
+    ],
     include_package_data=True,
     entry_points="""
         [console_scripts]

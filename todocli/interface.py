@@ -81,7 +81,11 @@ load_folders()
 
 right_window = HSplit([Window()])
 body = VSplit(
-    [left_window, Window(width=1, char="|", style="class:line"), right_window,]
+    [
+        left_window,
+        Window(width=1, char="|", style="class:line"),
+        right_window,
+    ]
 )
 
 
