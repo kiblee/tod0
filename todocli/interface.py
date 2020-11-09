@@ -315,7 +315,6 @@ def _(event):
     prompt_window = Window()
 
 
-
 kb = ConditionalKeyBindings(kb, is_not_waiting_for_confirmation)
 
 
