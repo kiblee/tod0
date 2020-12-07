@@ -2,6 +2,8 @@ import os
 import time
 import json
 import pickle
+from datetime import datetime
+
 import yaml
 from requests_oauthlib import OAuth2Session
 
@@ -181,6 +183,53 @@ def create_task(text, folder=None):
 
     return o.ok
 
+class Folders:
+    # Cache folders
+    name2id = {}
+    id2name = {}
+
+def create_task_new(text, folder=None, reminder_datetime : datetime =None):
+    token = get_token()
+    outlook = OAuth2Session(client_id, scope=scope, token=token)
+
+    if folder is not None:
+        todoTaskListId = Folders.name2id[folder]
+    else:
+        todoTaskListId = Folders.name2id["Tasks"]
+
+    request_url = "{}/lists/{}/tasks".format(base_api_url_todo, todoTaskListId)
+
+    request_body = {
+        "title": text
+    }
+
+    if reminder_datetime is not None:
+        timestamp_str = reminder_datetime.strftime("%Y-%m-%dT%H:%M:%S")
+        reminder_date_time = {
+          "dateTime": timestamp_str,
+          "timeZone": "W. Europe Standard Time"
+        }
+
+        request_body["isReminderOn"] = True
+        request_body["reminderDateTime"] = reminder_date_time
+
+
+    o = outlook.post(request_url, json=request_body)
+    return o.ok
+
+def list_and_update_folders_new():
+    token = get_token()
+    outlook = OAuth2Session(client_id, scope=scope, token=token)
+    request_url = "{}/lists".format(base_api_url_todo)
+    o = outlook.get(request_url)
+
+    folders = parse_contents(o)
+    for f in folders:
+        Folders.name2id[f["displayName"]] = f["id"]
+        Folders.id2name[f["id"]] = f["displayName"]
+    pass
+
+
 
 def delete_task(task_id):
     token = get_token()
@@ -210,6 +259,8 @@ authorize_url = "{0}{1}".format(settings["authority"], settings["authorize_endpo
 token_url = "{0}{1}".format(settings["authority"], settings["token_endpoint"])
 
 base_api_url = "https://graph.microsoft.com/beta/me/outlook/"
+
+base_api_url_todo = "https://graph.microsoft.com/v1.0/me/todo"
 
 # User settings location
 config_dir = "{}/.config/tod0".format(os.path.expanduser("~"))
