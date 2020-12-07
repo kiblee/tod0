@@ -1,8 +1,7 @@
 import distutils.util
 import sys
 
-from error import error
-
+from .error import error
 
 class SysargParser:
     class Option:
