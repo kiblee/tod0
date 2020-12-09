@@ -2,8 +2,7 @@ import sys
 
 from todocli.error import error
 from todocli import auth
-from todocli.todo_api import list_and_cache_folders, create_task, Folders, query_tasks
-
+import todocli.todo_api as todo_api
 
 from todocli.datetime_parser import parseDateTime
 
@@ -19,11 +18,20 @@ def parseTaskPath(task_path):
         return None, task_path
 
 
-def createNewTask(new_task_path : str):
-    list_and_cache_folders()
-    folder, name = parseTaskPath(new_task_path)
+def ls(args):
+    for folder in todo_api.Folders.folders_raw:
+        print(folder["displayName"])
 
-    reminder_date_time_str = sysarg_parser.get("reminder_date_time")
+def lst(args):
+    tasks = todo_api.query_tasks(args.list_name)
+    tasks_titles = [x["title"] for x in tasks]
+    for task in tasks_titles:
+        print(task)
+
+def new(args):
+    folder, name = parseTaskPath(args.task_name)
+
+    reminder_date_time_str = args.reminder
     reminder_datetime = None
 
     if reminder_date_time_str is not None:
@@ -32,59 +40,68 @@ def createNewTask(new_task_path : str):
     if folder is None:
         folder = "Tasks"
 
-    create_task(name, folder, reminder_datetime)
-    pass
-
-def ls(args):
-    for folder in Folders.folders_raw:
-        print(folder["displayName"])
-
-    return 0
-
-def lst(args):
-    tasks = query_tasks(args.list_name)
-    for task in tasks:
-        print(task)
-
-def new(args):
+    todo_api.create_task(name, folder, reminder_datetime)
     pass
 
 def newl(args):
+    todo_api.create_list(args.list_name)
+    pass
+
+def complete(args):
     pass
 
 def setupParser():
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Command line interface for Microsoft ToDo')
 
     parser.set_defaults(func=None)
-    # arg = parser.add_argument('command', choices=['ls', 'lst', 'new', 'newl'])
     subparsers = parser.add_subparsers(help='Command to execute')
 
-    parser_ls = subparsers.add_parser('ls', help='Display all lists.')
-    parser_ls.set_defaults(func=ls)
+    def parser_ls():
+        subparser = subparsers.add_parser('ls', help='Display all lists')
+        subparser.set_defaults(func=ls)
 
-    parser_lst = subparsers.add_parser('lst', help='Display tasks from a list.')
-    parser_lst.add_argument("list_name", nargs='?', default="Tasks",
-                            help="This optional argument specifies the list from which the tasks are displayed.")
-    parser_lst.set_defaults(func=lst)
+    def parser_lst():
+        subparser = subparsers.add_parser('lst', help='Display tasks from a list')
+        subparser.add_argument("list_name", nargs='?', default="Tasks",
+                                help="This optional argument specifies the list from which the tasks are displayed.")
+        subparser.set_defaults(func=lst)
 
-    parser_new = subparsers.add_parser('new', help='a help')
-    parser_new.set_defaults(func=new)
+    def parser_new():
+        subparser = subparsers.add_parser('new', help='Add a new task')
+        subparser.add_argument('task_name',
+                                help="Specify the task name. It's also possible to specify a task in a specific list by writing: list_name/task_name")
+        subparser.add_argument('-r', '--reminder')
+        subparser.set_defaults(func=new)
 
-    parser_newl = subparsers.add_parser('newl', help='a help')
-    parser_newl.set_defaults(func=newl)
+    def parser_newl():
+        subparser = subparsers.add_parser('newl', help='Add a new list')
+        subparser.add_argument("list_name", help="Name of the list to create")
+        subparser.set_defaults(func=newl)
+
+    def parser_complete():
+        subparser = subparsers.add_parser('complete', help='Complete a Task')
+        subparser.add_argument("task_name", help="Specify the task name. It's also possible to specify a task in a specific list by writing: list_name/task_name")
+        subparser.set_defaults(func=complete)
+
+    parser_lst()
+    parser_ls()
+    parser_new()
+    parser_newl()
+    parser_complete()
+
     return parser
 
 
 
 def main():
-    list_and_cache_folders()
+    todo_api.list_and_cache_folders()
     parser = setupParser()
 
     args = parser.parse_args()
     args.func(args)
 
 if __name__ == "__main__":
-    list_and_cache_folders()
+    todo_api.list_and_cache_folders()
     parser = setupParser()
     parser.print_help()
 
