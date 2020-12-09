@@ -1,10 +1,18 @@
 from datetime import datetime
+import pytz
+from tzlocal import get_localzone
 
 
 def datetimeToApiTimestamp(dt: datetime):
-    timestamp_str = dt.strftime("%Y-%m-%dT%H:%M:%S")
+    tz = get_localzone()
+    local_dt = tz.localize(dt, is_dst=None)
+    utc_dt = local_dt.astimezone(pytz.utc)
+
+    timestamp_str = utc_dt.strftime("%Y-%m-%dT%H:%M:%S")
+
     api_dt = {
         "dateTime": timestamp_str,
-        "timeZone": "W. Europe Standard Time"
+        "timeZone": "UTC"
     }
+
     return api_dt
