@@ -29,7 +29,7 @@ def lst(args):
         print(task)
 
 def new(args):
-    folder, name = parseTaskPath(args.task_name)
+    list, name = parseTaskPath(args.task_name)
 
     reminder_date_time_str = args.reminder
     reminder_datetime = None
@@ -37,10 +37,10 @@ def new(args):
     if reminder_date_time_str is not None:
         reminder_datetime = parseDateTime(reminder_date_time_str)
 
-    if folder is None:
-        folder = "Tasks"
+    if list is None:
+        list = "Tasks"
 
-    todo_api.create_task(name, folder, reminder_datetime)
+    todo_api.create_task(name, list, reminder_datetime)
     pass
 
 def newl(args):
@@ -48,6 +48,12 @@ def newl(args):
     pass
 
 def complete(args):
+    list, name = parseTaskPath(args.task_name)
+
+    if list is None:
+        list = "Tasks"
+
+    todo_api.complete_task(list, name)
     pass
 
 def setupParser():
@@ -90,8 +96,6 @@ def setupParser():
     parser_complete()
 
     return parser
-
-
 
 def main():
     todo_api.list_and_cache_folders()

@@ -15,10 +15,12 @@ def queryLists():
 def modifyList(todoTaskListId):
     return "{}/lists/{}".format(base_api_url, todoTaskListId)
 
+def modifyTask(todoTaskListId, taskId):
+    return "{}/lists/{}/tasks/{}".format(base_api_url, todoTaskListId, taskId)
 
-def queryTasksFromList(todoTaskListId):
-    return newTask(todoTaskListId) + "?$filter=status ne 'completed'&$top=100"
 
+def queryTasksFromList(todoTaskListId, num_tasks: int):
+    return newTask(todoTaskListId) + "?$filter=status ne 'completed'&$top={}".format(num_tasks)
 
 def modifyTask(todoTaskListId, taskId):
     return "{}/lists/{}/tasks/{}".format(base_api_url, todoTaskListId, taskId)
