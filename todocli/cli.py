@@ -17,16 +17,23 @@ def parseTaskPath(task_path):
     else:
         return None, task_path
 
+def print_list(list, print_line_nums):
+    i = 0
+    for x in list:
+        if print_line_nums:
+            print("[{}] ".format(i), end='')
+        print(x)
+        i+=1
 
 def ls(args):
-    for folder in todo_api.Folders.folders_raw:
-        print(folder["displayName"])
+    lists = todo_api.query_lists()
+    lists_names = [list["displayName"] for list in lists]
+    print_list(lists_names, args.display_linenums)
 
 def lst(args):
     tasks = todo_api.query_tasks(args.list_name)
     tasks_titles = [x["title"] for x in tasks]
-    for task in tasks_titles:
-        print(task)
+    print_list(tasks_titles, args.display_linenums)
 
 def new(args):
     list, name = parseTaskPath(args.task_name)
@@ -47,17 +54,33 @@ def newl(args):
     todo_api.create_list(args.list_name)
     pass
 
+def tryParseAsInt(input_str: str):
+    try:
+        return int(input_str)
+    except (ValueError):
+        return input_str
+
+
 def complete(args):
     list, name = parseTaskPath(args.task_name)
 
     if list is None:
         list = "Tasks"
 
-    todo_api.complete_task(list, name)
+    todo_api.complete_task(list, tryParseAsInt(name))
     pass
 
+class ArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        print(message, file=sys.stderr)
+        raise
+
+
+
 def setupParser():
-    parser = argparse.ArgumentParser(description='Command line interface for Microsoft ToDo')
+    parser = ArgumentParser(description='Command line interface for Microsoft ToDo')
+    parser.add_argument("--display_linenums", '-n', action='store_true', default=False, help="Display line numbers for the results")
+    parser.add_argument("--interactive", '-i', action='store_true', default=False, help="Interactive mode. Don't exit the application after invoking a command, ask for follow up commands instead.")
 
     parser.set_defaults(func=None)
     subparsers = parser.add_subparsers(help='Command to execute')
@@ -86,7 +109,17 @@ def setupParser():
 
     def parser_complete():
         subparser = subparsers.add_parser('complete', help='Complete a Task')
-        subparser.add_argument("task_name", help="Specify the task name. It's also possible to specify a task in a specific list by writing: list_name/task_name")
+        subparser.add_argument("task_name", help="""
+        Specify the task to complete. 
+        Can be one of the following:
+        task_name 
+        list_name/task_name 
+        task_number
+        list_name/task_number
+        
+        'task_number' is the number displayed when providing the argument '-n'  
+        """
+                                                 )
         subparser.set_defaults(func=complete)
 
     parser_lst()
@@ -98,22 +131,43 @@ def setupParser():
     return parser
 
 def main():
-    todo_api.list_and_cache_folders()
-    parser = setupParser()
+    try:
+        parser = setupParser()
 
-    args = parser.parse_args()
-    args.func(args)
+        isInteractive = False
+
+        if '-i' in sys.argv or '--interactive' in sys.argv:
+            isInteractive = True
+
+        while (True):
+            try:
+                args = parser.parse_args()
+                args.func(args)
+            except TypeError as e:
+                parser.print_help()
+            except:
+                pass
+            finally:
+                sys.stdout.flush()
+                sys.stderr.flush()
+                pass
+
+            if isInteractive:
+                sys.argv = sys.argv[:1]
+                arg = input("\nInput command: ")
+                args = arg.split()
+                sys.argv = sys.argv[:1]
+                sys.argv += args
+            else:
+                exit()
+    except KeyboardInterrupt:
+        print('\n')
+        exit(0)
+
+
 
 if __name__ == "__main__":
-    todo_api.list_and_cache_folders()
-    parser = setupParser()
-    parser.print_help()
-
-    arg = input("Input command:\n")
-    args = arg.split()
-    for arg in args:
-        sys.argv.append(arg)
-    print("Invoking: {}".format(" ".join(sys.argv)))
-    args = parser.parse_args()
-    args.func(args)
+    #sys.argv.append('-i')
+    #sys.argv.append('bla')
+    main()
     exit()

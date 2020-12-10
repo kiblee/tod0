@@ -14,11 +14,12 @@ setup(
         "pyyaml",
         "requests",
         "requests_oauthlib",
+        "tzlocal"
     ],
     include_package_data=True,
     entry_points="""
         [console_scripts]
-        tod0cli=todocli.cli:main
+        todocli=todocli.cli:main
     """,
     python_requires=">=3.6",
 )

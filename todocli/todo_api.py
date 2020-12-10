@@ -3,16 +3,19 @@ For implementation details, refer to this source:
 https://docs.microsoft.com/de-de/graph/api/resources/todo-overview?view=graph-rest-1.0
 """
 from datetime import datetime
+from typing import Union
 
 from todocli import api_urls
 from todocli.rest_request import RestRequestGet, RestRequestPost, RestRequestPatch
 from todocli.todo_api_util import datetimeToApiTimestamp
 
-class Folders:
-    # Cache folders
-    folders_raw = {}
-    name2id = {}
-    id2name = {}
+list_ids_cached = {}
+
+def queryListIdByName(list_name):
+    url = api_urls.queryLists()+"?$filter=startswith(displayName,'{}')".format(list_name)
+    res = RestRequestGet(url).execute()
+
+    return res[0]['id']
 
 
 def query_tasks(list_name: str, num_tasks: int = 100):
@@ -20,8 +23,13 @@ def query_tasks(list_name: str, num_tasks: int = 100):
     return RestRequestGet(query_url).execute()
 
 
-def getListIdByName(folder_name: str):
-    return Folders.name2id[folder_name]
+def getListIdByName(list_name: str):
+    if list_name not in list_ids_cached:
+        id = queryListIdByName(list_name)
+        list_ids_cached[list_name] = id
+        return id
+    else:
+        return list_ids_cached[list_name]
 
 
 def create_list(title: str):
@@ -49,15 +57,9 @@ def create_task(text: str, folder: str, reminder_datetime : datetime = None):
     return request.execute()
 
 
-def list_and_cache_folders():
-    folders = RestRequestGet(api_urls.queryLists()).execute()
-
-    Folders.folders_raw = folders
-    for f in folders:
-        Folders.name2id[f["displayName"]] = f["id"]
-        Folders.id2name[f["id"]] = f["displayName"]
-
-    return True
+def query_lists():
+    lists = RestRequestGet(api_urls.queryLists()).execute()
+    return lists
 
 
 def getTaskId(list_name: str, task_name: str):
@@ -66,10 +68,14 @@ def getTaskId(list_name: str, task_name: str):
     task = next(x for x in tasks if x["title"] == task_name)
     return task["id"]
 
-def complete_task(list_name: str, task_name: str):
-    task_id = getTaskId(list_name, task_name)
-
-    url = api_urls.modifyTask(getListIdByName(list_name), task_id)
+def complete_task(list_name: str, task_name: Union[str,int]):
+    if isinstance(task_name, str):
+        task_id = getTaskId(list_name, task_name)
+        url = api_urls.modifyTask(getListIdByName(list_name), task_id)
+    else:
+        tasks = query_tasks(list_name)
+        task_id = tasks[task_name]['id']
+        url = api_urls.modifyTask(getListIdByName(list_name), task_id)
 
     request = RestRequestPatch(url)
     request["completedDateTime"] = datetimeToApiTimestamp(datetime.now())
