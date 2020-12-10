@@ -2,14 +2,12 @@ from todocli.oauth import getOAuthSession
 from todocli.parse_contents import parse_contents
 
 
-class RestRequest():
+class RestRequest:
     def __init__(self, url):
         self.url = url
 
-class RestRequestGet(RestRequest):
-    def __init__(self, url):
-        super().__init__(url)
 
+class RestRequestGet(RestRequest):
     def execute(self):
         outlook = getOAuthSession()
         o = outlook.get(self.url)
@@ -18,6 +16,7 @@ class RestRequestGet(RestRequest):
             return result
         else:
             o.raise_for_status()
+
 
 class RestRequestWithBody(RestRequest):
     def __init__(self, url):
@@ -39,6 +38,7 @@ class RestRequestPost(RestRequestWithBody):
             return True
         else:
             o.raise_for_status()
+
 
 class RestRequestPatch(RestRequestWithBody):
     def execute(self):

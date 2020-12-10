@@ -23,6 +23,11 @@ def query_tasks(list_name: str, num_tasks: int = 100):
     return RestRequestGet(query_url).execute()
 
 
+def query_task(list_name: str, task_name: str):
+    query_url = api_urls.queryTaskByName(getListIdByName(list_name), task_name)
+    return RestRequestGet(query_url).execute()
+
+
 def getListIdByName(list_name: str):
     if list_name not in list_ids_cached:
         id = queryListIdByName(list_name)
@@ -62,22 +67,35 @@ def query_lists():
     return lists
 
 
-def getTaskId(list_name: str, task_name: str):
-    # todo this might fail when the task list contains of more than 100 tasks
-    tasks = query_tasks(list_name, 100)
-    task = next(x for x in tasks if x["title"] == task_name)
-    return task["id"]
+def getTaskIdByName(list_name: str, task_name: str):
+    try:
+        return query_task(list_name, task_name)[0]["id"]
+    except IndexError:
+        raise Exception(f"Task not found. List: {list_name}, task: {task_name}")
+
+
+def getTaskId(list_name: str, task_name_or_listpos: Union[str, int]):
+    if isinstance(task_name_or_listpos, str):
+        return getTaskIdByName(list_name, task_name_or_listpos)
+    elif isinstance(task_name_or_listpos, int):
+        tasks = query_tasks(list_name, task_name_or_listpos+1)
+        return tasks[task_name_or_listpos]['id']
+    else:
+        raise
+
 
 def complete_task(list_name: str, task_name: Union[str,int]):
-    if isinstance(task_name, str):
-        task_id = getTaskId(list_name, task_name)
-        url = api_urls.modifyTask(getListIdByName(list_name), task_id)
-    else:
-        tasks = query_tasks(list_name)
-        task_id = tasks[task_name]['id']
-        url = api_urls.modifyTask(getListIdByName(list_name), task_id)
+    task_id = getTaskId(list_name, task_name)
+
+    url = api_urls.modifyTask(getListIdByName(list_name), task_id)
 
     request = RestRequestPatch(url)
     request["completedDateTime"] = datetimeToApiTimestamp(datetime.now())
     request["status"] = 'completed'
     request.execute()
+
+
+def remove_task(task_list, param):
+    task_id = getTaskId(task_list, param)
+    api_urls.deleteTask(task_list, task_id)
+    return None
