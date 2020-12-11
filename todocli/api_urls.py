@@ -108,6 +108,8 @@ def newList():
 def queryLists():
     return newList()
 
+def queryListByName(list_name: str):
+    return queryLists() + ODataSystemQuery().filter_eq("displayName", list_name).get()
 
 def modifyList(todo_task_list_id):
     return "{}/lists/{}".format(base_api_url, todo_task_list_id)
@@ -123,7 +125,6 @@ def queryTasksFromList(todo_task_list_id, num_tasks: int):
 
 def queryTaskByName(todo_task_list_id, task_name: str):
     return newTask(todo_task_list_id) + ODataSystemQuery().filter_eq("title", task_name).get()
-
 
 def deleteTask(todo_task_list_id, task_id):
     return modifyTask(todo_task_list_id, task_id)

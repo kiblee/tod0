@@ -13,7 +13,7 @@ list_ids_cached = {}
 
 
 def queryListIdByName(list_name):
-    url = api_urls.queryLists() + "?$filter=startswith(displayName,'{}')".format(list_name)
+    url = api_urls.queryListByName(list_name)
     res = RestRequestGet(url).execute()
 
     return res[0]['id']
