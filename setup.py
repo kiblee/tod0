@@ -14,7 +14,7 @@ setup(
         "pyyaml",
         "requests",
         "requests_oauthlib",
-        "tzlocal"
+        "tzlocal",
     ],
     include_package_data=True,
     entry_points="""
