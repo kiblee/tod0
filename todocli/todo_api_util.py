@@ -10,9 +10,6 @@ def datetime_to_api_timestamp(dt: datetime):
 
     timestamp_str = utc_dt.strftime("%Y-%m-%dT%H:%M:%S")
 
-    api_dt = {
-        "dateTime": timestamp_str,
-        "timeZone": "UTC"
-    }
+    api_dt = {"dateTime": timestamp_str, "timeZone": "UTC"}
 
     return api_dt

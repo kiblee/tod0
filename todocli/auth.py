@@ -63,9 +63,7 @@ def create_folder(name):
     outlook = get_oauth_session()
 
     # Fill request body
-    request_body = {
-        "name": name
-    }
+    request_body = {"name": name}
 
     o = outlook.post("{}/taskFolders".format(base_api_url), json=request_body)
 
@@ -84,9 +82,7 @@ def create_task(text, folder=None):
     outlook = get_oauth_session()
 
     # Fill request body
-    request_body = {
-        "subject": text
-    }
+    request_body = {"subject": text}
 
     if folder is None:
         o = outlook.post("{}/tasks".format(base_api_url), json=request_body)

@@ -6,21 +6,30 @@ from datetime import datetime
 from typing import Union
 
 from todocli import api_urls
-from todocli.rest_request import RestRequestGet, RestRequestPost, RestRequestPatch, RestRequestDelete
+from todocli.rest_request import (
+    RestRequestGet,
+    RestRequestPost,
+    RestRequestPatch,
+    RestRequestDelete,
+)
 from todocli.todo_api_util import datetime_to_api_timestamp
 
 list_ids_cached = {}
 
 
 def query_list_id_by_name(list_name):
-    url = api_urls.query_lists() + "?$filter=startswith(displayName,'{}')".format(list_name)
+    url = api_urls.query_lists() + "?$filter=startswith(displayName,'{}')".format(
+        list_name
+    )
     res = RestRequestGet(url).execute()
 
-    return res[0]['id']
+    return res[0]["id"]
 
 
 def query_tasks(list_name: str, num_tasks: int = 100):
-    query_url = api_urls.query_tasks_from_list(get_list_id_by_name(list_name), num_tasks)
+    query_url = api_urls.query_tasks_from_list(
+        get_list_id_by_name(list_name), num_tasks
+    )
     return RestRequestGet(query_url).execute()
 
 
@@ -45,7 +54,9 @@ def create_list(title: str):
 
 
 def rename_list(old_list_title: str, new_list_title: str):
-    request = RestRequestPatch(api_urls.modify_list(get_list_id_by_name(old_list_title)))
+    request = RestRequestPatch(
+        api_urls.modify_list(get_list_id_by_name(old_list_title))
+    )
     request["title"] = new_list_title
     return request.execute()
 
@@ -80,7 +91,7 @@ def get_task_id(list_name: str, task_name_or_listpos: Union[str, int]):
         return get_task_id_by_name(list_name, task_name_or_listpos)
     elif isinstance(task_name_or_listpos, int):
         tasks = query_tasks(list_name, task_name_or_listpos + 1)
-        return tasks[task_name_or_listpos]['id']
+        return tasks[task_name_or_listpos]["id"]
     else:
         raise
 
@@ -92,7 +103,7 @@ def complete_task(list_name: str, task_name: Union[str, int]):
 
     request = RestRequestPatch(url)
     request["completedDateTime"] = datetime_to_api_timestamp(datetime.now())
-    request["status"] = 'completed'
+    request["status"] = "completed"
     request.execute()
 
 

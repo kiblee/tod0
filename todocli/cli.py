@@ -8,8 +8,8 @@ from todocli.error import error
 
 
 def parse_task_path(task_path):
-    if '/' in task_path:
-        elems = task_path.split('/')
+    if "/" in task_path:
+        elems = task_path.split("/")
         if len(elems) > 2:
             error("Invalid path, path can only contain one '/'")
         return elems[0], elems[1]
@@ -21,7 +21,7 @@ def print_list(item_list, print_line_nums):
     i = 0
     for x in item_list:
         if print_line_nums:
-            print("[{}] ".format(i), end='')
+            print("[{}] ".format(i), end="")
         print(x)
         i += 1
 
@@ -98,41 +98,45 @@ helptext_task_name = """
 
 
 def setup_parser():
-    parser = ArgumentParser(description='Command line interface for Microsoft ToDo')
+    parser = ArgumentParser(description="Command line interface for Microsoft ToDo")
 
     parser.set_defaults(func=None)
-    subparsers = parser.add_subparsers(help='Command to execute')
+    subparsers = parser.add_subparsers(help="Command to execute")
 
     def parser_ls():
-        subparser = subparsers.add_parser('ls', help='Display all lists')
+        subparser = subparsers.add_parser("ls", help="Display all lists")
         subparser.set_defaults(func=ls)
 
     def parser_lst():
-        subparser = subparsers.add_parser('lst', help='Display tasks from a list')
-        subparser.add_argument("list_name", nargs='?', default="Tasks",
-                               help="This optional argument specifies the list from which the tasks are displayed."
-                                    "If this parameter is omitted, \
-                                    all tasks from the default task list will be displayed")
+        subparser = subparsers.add_parser("lst", help="Display tasks from a list")
+        subparser.add_argument(
+            "list_name",
+            nargs="?",
+            default="Tasks",
+            help="This optional argument specifies the list from which the tasks are displayed."
+            "If this parameter is omitted, \
+                                    all tasks from the default task list will be displayed",
+        )
         subparser.set_defaults(func=lst)
 
     def parser_new():
-        subparser = subparsers.add_parser('new', help='Add a new task')
-        subparser.add_argument('task_name', help=helptext_task_name)
-        subparser.add_argument('-r', '--reminder')
+        subparser = subparsers.add_parser("new", help="Add a new task")
+        subparser.add_argument("task_name", help=helptext_task_name)
+        subparser.add_argument("-r", "--reminder")
         subparser.set_defaults(func=new)
 
     def parser_newl():
-        subparser = subparsers.add_parser('newl', help='Add a new list')
+        subparser = subparsers.add_parser("newl", help="Add a new list")
         subparser.add_argument("list_name", help="Name of the list to create")
         subparser.set_defaults(func=newl)
 
     def parser_complete():
-        subparser = subparsers.add_parser('complete', help='Complete a Task')
+        subparser = subparsers.add_parser("complete", help="Complete a Task")
         subparser.add_argument("task_name", help=helptext_task_name)
         subparser.set_defaults(func=complete)
 
     def parser_rm():
-        subparser = subparsers.add_parser('rm', help='Remove a Task')
+        subparser = subparsers.add_parser("rm", help="Remove a Task")
         subparser.add_argument("task_name", help=helptext_task_name)
         subparser.set_defaults(func=rm)
 
@@ -143,11 +147,21 @@ def setup_parser():
     parser_complete()
     parser_rm()
 
-    parser.add_argument('-n', "--display_linenums", action='store_true', default=False,
-                        help="Display line numbers for the results")
-    parser.add_argument('-i', "--interactive", action='store_true', default=False,
-                        help="Interactive mode. \
-                            Don't exit the application after invoking a command, ask for follow up commands instead.")
+    parser.add_argument(
+        "-n",
+        "--display_linenums",
+        action="store_true",
+        default=False,
+        help="Display line numbers for the results",
+    )
+    parser.add_argument(
+        "-i",
+        "--interactive",
+        action="store_true",
+        default=False,
+        help="Interactive mode. \
+                            Don't exit the application after invoking a command, ask for follow up commands instead.",
+    )
 
     return parser
 
@@ -158,7 +172,7 @@ def main():
 
         isInteractive = False
 
-        if '-i' in sys.argv or '--interactive' in sys.argv:
+        if "-i" in sys.argv or "--interactive" in sys.argv:
             isInteractive = True
 
         while True:
@@ -187,11 +201,11 @@ def main():
             else:
                 exit()
     except KeyboardInterrupt:
-        print('\n')
+        print("\n")
         exit(0)
 
 
 if __name__ == "__main__":
-    sys.argv.append('-i')
+    sys.argv.append("-i")
     main()
     exit()

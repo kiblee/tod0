@@ -118,11 +118,17 @@ def modify_task(todo_task_list_id, task_id):
 
 
 def query_tasks_from_list(todo_task_list_id, num_tasks: int):
-    return new_task(todo_task_list_id) + ODataSystemQuery().filter_ne("status", "completed").top(num_tasks).get()
+    return (
+        new_task(todo_task_list_id)
+        + ODataSystemQuery().filter_ne("status", "completed").top(num_tasks).get()
+    )
 
 
 def query_task_by_name(todo_task_list_id, task_name: str):
-    return new_task(todo_task_list_id) + ODataSystemQuery().filter_eq("title", task_name).get()
+    return (
+        new_task(todo_task_list_id)
+        + ODataSystemQuery().filter_eq("title", task_name).get()
+    )
 
 
 def delete_task(todo_task_list_id, task_id):

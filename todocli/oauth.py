@@ -11,7 +11,7 @@ settings = {
     "scopes": "openid offline_access tasks.readwrite",
     "authority": "https://login.microsoftonline.com/common",
     "authorize_endpoint": "/oauth2/v2.0/authorize",
-    "token_endpoint": "/oauth2/v2.0/token"
+    "token_endpoint": "/oauth2/v2.0/token",
 }
 
 # Code taken from https://docs.microsoft.com/en-us/graph/tutorials/python?tutorial-step=3
@@ -55,10 +55,7 @@ def check_keys(keys):
 
 
 if not os.path.isfile(keys_path):
-    keys = {
-        "client_id": "",
-        "client_secret": ""
-    }
+    keys = {"client_id": "", "client_secret": ""}
 
     with open(keys_path, "w") as f:
         yaml.dump(keys, f)
