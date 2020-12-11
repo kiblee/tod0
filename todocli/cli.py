@@ -1,4 +1,5 @@
 import argparse
+import shlex
 import sys
 
 import todocli.todo_api as todo_api
@@ -180,7 +181,7 @@ def main():
 
             if isInteractive:
                 arg = input("\nInput command: ")
-                args = arg.split()
+                args = shlex.split(arg)
                 sys.argv = sys.argv[:1]
                 sys.argv += args
             else:
