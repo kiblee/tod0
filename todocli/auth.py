@@ -1,15 +1,18 @@
-import os
 import json
+import os
 import pickle
-from datetime import datetime
 
-from todocli.oauth import getOAuthSession, config_dir
-from todocli.parse_contents import parse_contents
+from todocli.oauth import get_oauth_session, config_dir
 
 base_api_url = "https://graph.microsoft.com/beta/me/outlook/"
 
+
+def parse_contents(response):
+    return json.loads(response.content.decode())["value"]
+
+
 def list_tasks(all_=False, folder=""):
-    outlook = getOAuthSession()
+    outlook = get_oauth_session()
 
     if folder == "":
         if all_:
@@ -34,7 +37,7 @@ def list_tasks(all_=False, folder=""):
 
 
 def list_and_update_folders():
-    outlook = getOAuthSession()
+    outlook = get_oauth_session()
     o = outlook.get("{}/taskFolders?top=20".format(base_api_url))
     contents = parse_contents(o)
 
@@ -57,11 +60,12 @@ def list_and_update_folders():
 
 def create_folder(name):
     """Create folder with name `name`"""
-    outlook = getOAuthSession()
+    outlook = get_oauth_session()
 
     # Fill request body
-    request_body = {}
-    request_body["name"] = name
+    request_body = {
+        "name": name
+    }
 
     o = outlook.post("{}/taskFolders".format(base_api_url), json=request_body)
 
@@ -70,18 +74,19 @@ def create_folder(name):
 
 def delete_folder(folder_id):
     """Delete folder with id `folder_id`"""
-    outlook = getOAuthSession()
+    outlook = get_oauth_session()
     o = outlook.delete("{}/taskFolders/{}".format(base_api_url, folder_id))
     return o.ok
 
 
 def create_task(text, folder=None):
     """Create task with subject `text`"""
-    outlook = getOAuthSession()
+    outlook = get_oauth_session()
 
     # Fill request body
-    request_body = {}
-    request_body["subject"] = text
+    request_body = {
+        "subject": text
+    }
 
     if folder is None:
         o = outlook.post("{}/tasks".format(base_api_url), json=request_body)
@@ -94,14 +99,14 @@ def create_task(text, folder=None):
 
 
 def delete_task(task_id):
-    outlook = getOAuthSession()
+    outlook = get_oauth_session()
 
     o = outlook.delete("{}/tasks/{}".format(base_api_url, task_id))
     return o.ok
 
 
 def complete_task(task_id):
-    outlook = getOAuthSession()
+    outlook = get_oauth_session()
 
     o = outlook.post("{}/tasks/{}/complete".format(base_api_url, task_id))
     return o.ok

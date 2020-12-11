@@ -1,6 +1,6 @@
 import json
 
-from todocli.oauth import getOAuthSession
+from todocli.oauth import get_oauth_session
 
 
 class RestRequest:
@@ -37,27 +37,27 @@ class RestRequestWithBody(RestRequest):
 
 class RestRequestGet(RestRequest):
     def execute(self):
-        outlook = getOAuthSession()
+        outlook = get_oauth_session()
         o = outlook.get(self.url)
         return self.parseResult(o)
 
 
 class RestRequestPost(RestRequestWithBody):
     def execute(self):
-        outlook = getOAuthSession()
+        outlook = get_oauth_session()
         o = outlook.post(self.url, json=self.body)
         return self.evaluateResult(o)
 
 
 class RestRequestPatch(RestRequestWithBody):
     def execute(self):
-        outlook = getOAuthSession()
+        outlook = get_oauth_session()
         o = outlook.patch(self.url, json=self.body)
         return self.evaluateResult(o)
 
 
 class RestRequestDelete(RestRequest):
     def execute(self):
-        outlook = getOAuthSession()
+        outlook = get_oauth_session()
         o = outlook.delete(self.url)
         return self.evaluateResult(o)

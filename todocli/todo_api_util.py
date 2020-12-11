@@ -3,7 +3,7 @@ import pytz
 from tzlocal import get_localzone
 
 
-def datetimeToApiTimestamp(dt: datetime):
+def datetime_to_api_timestamp(dt: datetime):
     tz = get_localzone()
     local_dt = tz.localize(dt, is_dst=None)
     utc_dt = local_dt.astimezone(pytz.utc)
