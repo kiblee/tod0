@@ -6,13 +6,14 @@ from datetime import datetime
 from typing import Union
 
 from todocli import api_urls
-from todocli.rest_request import RestRequestGet, RestRequestPost, RestRequestPatch
+from todocli.rest_request import RestRequestGet, RestRequestPost, RestRequestPatch, RestRequestDelete
 from todocli.todo_api_util import datetimeToApiTimestamp
 
 list_ids_cached = {}
 
+
 def queryListIdByName(list_name):
-    url = api_urls.queryLists()+"?$filter=startswith(displayName,'{}')".format(list_name)
+    url = api_urls.queryLists() + "?$filter=startswith(displayName,'{}')".format(list_name)
     res = RestRequestGet(url).execute()
 
     return res[0]['id']
@@ -30,9 +31,9 @@ def query_task(list_name: str, task_name: str):
 
 def getListIdByName(list_name: str):
     if list_name not in list_ids_cached:
-        id = queryListIdByName(list_name)
-        list_ids_cached[list_name] = id
-        return id
+        list_id = queryListIdByName(list_name)
+        list_ids_cached[list_name] = list_id
+        return list_id
     else:
         return list_ids_cached[list_name]
 
@@ -49,7 +50,7 @@ def rename_list(old_list_title: str, new_list_title: str):
     return request.execute()
 
 
-def create_task(text: str, folder: str, reminder_datetime : datetime = None):
+def create_task(text: str, folder: str, reminder_datetime: datetime = None):
     todoTaskListId = getListIdByName(folder)
 
     request = RestRequestPost(api_urls.newTask(todoTaskListId))
@@ -78,13 +79,13 @@ def getTaskId(list_name: str, task_name_or_listpos: Union[str, int]):
     if isinstance(task_name_or_listpos, str):
         return getTaskIdByName(list_name, task_name_or_listpos)
     elif isinstance(task_name_or_listpos, int):
-        tasks = query_tasks(list_name, task_name_or_listpos+1)
+        tasks = query_tasks(list_name, task_name_or_listpos + 1)
         return tasks[task_name_or_listpos]['id']
     else:
         raise
 
 
-def complete_task(list_name: str, task_name: Union[str,int]):
+def complete_task(list_name: str, task_name: Union[str, int]):
     task_id = getTaskId(list_name, task_name)
 
     url = api_urls.modifyTask(getListIdByName(list_name), task_id)
@@ -97,5 +98,6 @@ def complete_task(list_name: str, task_name: Union[str,int]):
 
 def remove_task(task_list, param):
     task_id = getTaskId(task_list, param)
-    api_urls.deleteTask(task_list, task_id)
-    return None
+    url = api_urls.deleteTask(task_list, task_id)
+    request = RestRequestDelete(url)
+    request.execute()

@@ -1,21 +1,26 @@
+import json
+
 from todocli.oauth import getOAuthSession
-from todocli.parse_contents import parse_contents
 
 
 class RestRequest:
     def __init__(self, url):
         self.url = url
 
-
-class RestRequestGet(RestRequest):
-    def execute(self):
-        outlook = getOAuthSession()
-        o = outlook.get(self.url)
+    @staticmethod
+    def evaluateResult(o):
         if o.ok:
-            result = parse_contents(o)
-            return result
+            return True
         else:
             o.raise_for_status()
+
+    @staticmethod
+    def parse_contents(response):
+        return json.loads(response.content.decode())["value"]
+
+    def parseResult(self, o):
+        self.evaluateResult(o)
+        return self.parse_contents(o)
 
 
 class RestRequestWithBody(RestRequest):
@@ -28,23 +33,31 @@ class RestRequestWithBody(RestRequest):
 
     def addToRequestBody(self, tag, value):
         self.body[tag] = value
-        
+
+
+class RestRequestGet(RestRequest):
+    def execute(self):
+        outlook = getOAuthSession()
+        o = outlook.get(self.url)
+        return self.parseResult(o)
+
 
 class RestRequestPost(RestRequestWithBody):
     def execute(self):
         outlook = getOAuthSession()
         o = outlook.post(self.url, json=self.body)
-        if o.ok:
-            return True
-        else:
-            o.raise_for_status()
+        return self.evaluateResult(o)
 
 
 class RestRequestPatch(RestRequestWithBody):
     def execute(self):
         outlook = getOAuthSession()
         o = outlook.patch(self.url, json=self.body)
-        if o.ok:
-            return True
-        else:
-            o.raise_for_status()
+        return self.evaluateResult(o)
+
+
+class RestRequestDelete(RestRequest):
+    def execute(self):
+        outlook = getOAuthSession()
+        o = outlook.delete(self.url)
+        return self.evaluateResult(o)

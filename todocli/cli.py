@@ -75,14 +75,13 @@ def rm(args):
 
 
 class ArgumentParser(argparse.ArgumentParser):
-    def error(self, message):
-        """
-        The default behaviour of the argparse.ArgumentParser class is to invoke exit() on error
-        We don't wanna do that here in case the program execution should continue (interactive mode)
-        so just
-        """
-        print(message, file=sys.stderr)
-        raise
+    class OnExit(Exception):
+        pass
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, sys.stderr)
+        raise self.OnExit()
 
 
 helptext_task_name = """
@@ -99,11 +98,6 @@ helptext_task_name = """
 
 def setupParser():
     parser = ArgumentParser(description='Command line interface for Microsoft ToDo')
-    parser.add_argument('-n', "--display_linenums", action='store_true', default=False,
-                        help="Display line numbers for the results")
-    parser.add_argument('-i', "--interactive", action='store_true', default=False,
-                        help="Interactive mode. \
-                        Don't exit the application after invoking a command, ask for follow up commands instead.")
 
     parser.set_defaults(func=None)
     subparsers = parser.add_subparsers(help='Command to execute')
@@ -148,6 +142,12 @@ def setupParser():
     parser_complete()
     parser_rm()
 
+    parser.add_argument('-n', "--display_linenums", action='store_true', default=False,
+                        help="Display line numbers for the results")
+    parser.add_argument('-i', "--interactive", action='store_true', default=False,
+                        help="Interactive mode. \
+                            Don't exit the application after invoking a command, ask for follow up commands instead.")
+
     return parser
 
 
@@ -162,11 +162,16 @@ def main():
 
         while True:
             try:
-                args = parser.parse_args()
-                args.func(args)
-            except TypeError as e:
+                namespace, args = parser.parse_known_args()
+                parser.parse_args(args, namespace)
+
+                namespace.func(namespace)
+
+            except TypeError:
                 parser.print_help()
             except argparse.ArgumentError:
+                pass
+            except ArgumentParser.OnExit:
                 pass
             finally:
                 sys.stdout.flush()

@@ -6,13 +6,13 @@ import time
 import yaml
 from requests_oauthlib import OAuth2Session
 
-settings = {}
-settings["redirect"] = "https://localhost/login/authorized"
-settings["scopes"] = "openid offline_access tasks.readwrite"
-settings["authority"] = "https://login.microsoftonline.com/common"
-settings["authorize_endpoint"] = "/oauth2/v2.0/authorize"
-settings["token_endpoint"] = "/oauth2/v2.0/token"
-
+settings = {
+    "redirect": "https://localhost/login/authorized",
+    "scopes": "openid offline_access tasks.readwrite",
+    "authority": "https://login.microsoftonline.com/common",
+    "authorize_endpoint": "/oauth2/v2.0/authorize",
+    "token_endpoint": "/oauth2/v2.0/token"
+}
 
 # Code taken from https://docs.microsoft.com/en-us/graph/tutorials/python?tutorial-step=3
 
@@ -35,6 +35,7 @@ if not os.path.isdir(config_dir):
 # Check for api keys
 keys_path = os.path.join(config_dir, "keys.yml")
 
+
 def check_keys(keys):
     client_id = keys["client_id"]
     client_secret = keys["client_secret"]
@@ -52,10 +53,13 @@ def check_keys(keys):
         )
         exit()
 
+
 if not os.path.isfile(keys_path):
-    keys = {}
-    keys["client_id"] = ""
-    keys["client_secret"] = ""
+    keys = {
+        "client_id": "",
+        "client_secret": ""
+    }
+
     with open(keys_path, "w") as f:
         yaml.dump(keys, f)
     check_keys(keys)
@@ -67,6 +71,7 @@ else:
 
 client_id = keys["client_id"]
 client_secret = keys["client_secret"]
+
 
 def get_token():
     try:
@@ -121,6 +126,7 @@ def refresh_token(token):
 
     # Token still valid, just return it
     return token
+
 
 def getOAuthSession():
     token = get_token()
