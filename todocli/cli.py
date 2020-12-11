@@ -3,11 +3,11 @@ import shlex
 import sys
 
 import todocli.todo_api as todo_api
-from todocli.datetime_parser import parseDateTime
+from todocli.datetime_parser import parse_datetime
 from todocli.error import error
 
 
-def parseTaskPath(task_path):
+def parse_task_path(task_path):
     if '/' in task_path:
         elems = task_path.split('/')
         if len(elems) > 2:
@@ -39,13 +39,13 @@ def lst(args):
 
 
 def new(args):
-    task_list, name = parseTaskPath(args.task_name)
+    task_list, name = parse_task_path(args.task_name)
 
     reminder_date_time_str = args.reminder
     reminder_datetime = None
 
     if reminder_date_time_str is not None:
-        reminder_datetime = parseDateTime(reminder_date_time_str)
+        reminder_datetime = parse_datetime(reminder_date_time_str)
 
     todo_api.create_task(name, task_list, reminder_datetime)
     pass
@@ -56,7 +56,7 @@ def newl(args):
     pass
 
 
-def tryParseAsInt(input_str: str):
+def try_parse_as_int(input_str: str):
     try:
         return int(input_str)
     except ValueError:
@@ -64,15 +64,15 @@ def tryParseAsInt(input_str: str):
 
 
 def complete(args):
-    task_list, name = parseTaskPath(args.task_name)
+    task_list, name = parse_task_path(args.task_name)
 
-    todo_api.complete_task(task_list, tryParseAsInt(name))
+    todo_api.complete_task(task_list, try_parse_as_int(name))
     pass
 
 
 def rm(args):
-    task_list, name = parseTaskPath(args.task_name)
-    todo_api.remove_task(task_list, tryParseAsInt(name))
+    task_list, name = parse_task_path(args.task_name)
+    todo_api.remove_task(task_list, try_parse_as_int(name))
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -97,7 +97,7 @@ helptext_task_name = """
         """
 
 
-def setupParser():
+def setup_parser():
     parser = ArgumentParser(description='Command line interface for Microsoft ToDo')
 
     parser.set_defaults(func=None)
@@ -154,7 +154,7 @@ def setupParser():
 
 def main():
     try:
-        parser = setupParser()
+        parser = setup_parser()
 
         isInteractive = False
 

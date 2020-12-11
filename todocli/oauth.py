@@ -128,6 +128,6 @@ def refresh_token(token):
     return token
 
 
-def getOAuthSession():
+def get_oauth_session():
     token = get_token()
     return OAuth2Session(client_id, scope=scope, token=token)

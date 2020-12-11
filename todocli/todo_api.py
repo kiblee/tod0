@@ -7,31 +7,31 @@ from typing import Union
 
 from todocli import api_urls
 from todocli.rest_request import RestRequestGet, RestRequestPost, RestRequestPatch, RestRequestDelete
-from todocli.todo_api_util import datetimeToApiTimestamp
+from todocli.todo_api_util import datetime_to_api_timestamp
 
 list_ids_cached = {}
 
 
-def queryListIdByName(list_name):
-    url = api_urls.queryListByName(list_name)
+def query_list_id_by_name(list_name):
+    url = api_urls.query_lists() + "?$filter=startswith(displayName,'{}')".format(list_name)
     res = RestRequestGet(url).execute()
 
     return res[0]['id']
 
 
 def query_tasks(list_name: str, num_tasks: int = 100):
-    query_url = api_urls.queryTasksFromList(getListIdByName(list_name), num_tasks)
+    query_url = api_urls.query_tasks_from_list(get_list_id_by_name(list_name), num_tasks)
     return RestRequestGet(query_url).execute()
 
 
 def query_task(list_name: str, task_name: str):
-    query_url = api_urls.queryTaskByName(getListIdByName(list_name), task_name)
+    query_url = api_urls.query_task_by_name(get_list_id_by_name(list_name), task_name)
     return RestRequestGet(query_url).execute()
 
 
-def getListIdByName(list_name: str):
+def get_list_id_by_name(list_name: str):
     if list_name not in list_ids_cached:
-        list_id = queryListIdByName(list_name)
+        list_id = query_list_id_by_name(list_name)
         list_ids_cached[list_name] = list_id
         return list_id
     else:
@@ -39,45 +39,45 @@ def getListIdByName(list_name: str):
 
 
 def create_list(title: str):
-    request = RestRequestPost(api_urls.newList())
+    request = RestRequestPost(api_urls.new_list())
     request["title"] = title
     return request.execute()
 
 
 def rename_list(old_list_title: str, new_list_title: str):
-    request = RestRequestPatch(api_urls.modifyList(getListIdByName(old_list_title)))
+    request = RestRequestPatch(api_urls.modify_list(get_list_id_by_name(old_list_title)))
     request["title"] = new_list_title
     return request.execute()
 
 
 def create_task(text: str, folder: str, reminder_datetime: datetime = None):
-    todoTaskListId = getListIdByName(folder)
+    todoTaskListId = get_list_id_by_name(folder)
 
-    request = RestRequestPost(api_urls.newTask(todoTaskListId))
+    request = RestRequestPost(api_urls.new_task(todoTaskListId))
     request["title"] = text
 
     if reminder_datetime is not None:
         request["isReminderOn"] = True
-        request["reminderDateTime"] = datetimeToApiTimestamp(reminder_datetime)
+        request["reminderDateTime"] = datetime_to_api_timestamp(reminder_datetime)
 
     return request.execute()
 
 
 def query_lists():
-    lists = RestRequestGet(api_urls.queryLists()).execute()
+    lists = RestRequestGet(api_urls.query_lists()).execute()
     return lists
 
 
-def getTaskIdByName(list_name: str, task_name: str):
+def get_task_id_by_name(list_name: str, task_name: str):
     try:
         return query_task(list_name, task_name)[0]["id"]
     except IndexError:
         raise Exception(f"Task not found. List: {list_name}, task: {task_name}")
 
 
-def getTaskId(list_name: str, task_name_or_listpos: Union[str, int]):
+def get_task_id(list_name: str, task_name_or_listpos: Union[str, int]):
     if isinstance(task_name_or_listpos, str):
-        return getTaskIdByName(list_name, task_name_or_listpos)
+        return get_task_id_by_name(list_name, task_name_or_listpos)
     elif isinstance(task_name_or_listpos, int):
         tasks = query_tasks(list_name, task_name_or_listpos + 1)
         return tasks[task_name_or_listpos]['id']
@@ -86,18 +86,18 @@ def getTaskId(list_name: str, task_name_or_listpos: Union[str, int]):
 
 
 def complete_task(list_name: str, task_name: Union[str, int]):
-    task_id = getTaskId(list_name, task_name)
+    task_id = get_task_id(list_name, task_name)
 
-    url = api_urls.modifyTask(getListIdByName(list_name), task_id)
+    url = api_urls.modify_task(get_list_id_by_name(list_name), task_id)
 
     request = RestRequestPatch(url)
-    request["completedDateTime"] = datetimeToApiTimestamp(datetime.now())
+    request["completedDateTime"] = datetime_to_api_timestamp(datetime.now())
     request["status"] = 'completed'
     request.execute()
 
 
 def remove_task(task_list, param):
-    task_id = getTaskId(task_list, param)
-    url = api_urls.deleteTask(task_list, task_id)
+    task_id = get_task_id(task_list, param)
+    url = api_urls.delete_task(task_list, task_id)
     request = RestRequestDelete(url)
     request.execute()

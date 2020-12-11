@@ -13,7 +13,7 @@ class ODataSystemQuery:
         Ascending = "asc"
         Descending = "desc"
 
-    def addToQuery(self, expr):
+    def add_to_query(self, expr):
         if len(self.query_expr) == 1:
             self.query_expr += expr
         else:
@@ -23,11 +23,11 @@ class ODataSystemQuery:
         self.query_expr = "?"
 
     def count(self):
-        self.addToQuery("$count=true")
+        self.add_to_query("$count=true")
         return self
 
     def expand(self, expr):
-        self.addToQuery("$expand={}".format(expr))
+        self.add_to_query("$expand={}".format(expr))
         return self
 
     def filter_startsWith(self, property_name, expr):
@@ -67,15 +67,15 @@ class ODataSystemQuery:
         return self
 
     def filter(self, expr):
-        self.addToQuery("$filter={}".format(expr))
+        self.add_to_query("$filter={}".format(expr))
         return self
 
     def format(self, ftmat: Format):
-        self.addToQuery("$format={}".format(ftmat.value))
+        self.add_to_query("$format={}".format(ftmat.value))
         return self
 
     def orderBy(self, expr, sort_order: SortOrder = SortOrder.Ascending):
-        self.addToQuery("$orderby={} {}".format(expr, sort_order.value))
+        self.add_to_query("$orderby={} {}".format(expr, sort_order.value))
         return self
 
     def search(self, expr):
@@ -88,7 +88,7 @@ class ODataSystemQuery:
         raise Exception("Not implemented")
 
     def top(self, num_elements):
-        self.addToQuery("$top={}".format(num_elements))
+        self.add_to_query("$top={}".format(num_elements))
         return self
 
     def get(self):
@@ -97,34 +97,33 @@ class ODataSystemQuery:
         return self.query_expr
 
 
-def newTask(todo_task_list_id):
+def new_task(todo_task_list_id):
     return "{}/lists/{}/tasks".format(base_api_url, todo_task_list_id)
 
 
-def newList():
+def new_list():
     return "{}/lists".format(base_api_url)
 
 
-def queryLists():
-    return newList()
+def query_lists():
+    return new_list()
 
-def queryListByName(list_name: str):
-    return queryLists() + ODataSystemQuery().filter_eq("displayName", list_name).get()
 
-def modifyList(todo_task_list_id):
+def modify_list(todo_task_list_id):
     return "{}/lists/{}".format(base_api_url, todo_task_list_id)
 
 
-def modifyTask(todo_task_list_id, task_id):
+def modify_task(todo_task_list_id, task_id):
     return "{}/lists/{}/tasks/{}".format(base_api_url, todo_task_list_id, task_id)
 
 
-def queryTasksFromList(todo_task_list_id, num_tasks: int):
-    return newTask(todo_task_list_id) + ODataSystemQuery().filter_ne("status", "completed").top(num_tasks).get()
+def query_tasks_from_list(todo_task_list_id, num_tasks: int):
+    return new_task(todo_task_list_id) + ODataSystemQuery().filter_ne("status", "completed").top(num_tasks).get()
 
 
-def queryTaskByName(todo_task_list_id, task_name: str):
-    return newTask(todo_task_list_id) + ODataSystemQuery().filter_eq("title", task_name).get()
+def query_task_by_name(todo_task_list_id, task_name: str):
+    return new_task(todo_task_list_id) + ODataSystemQuery().filter_eq("title", task_name).get()
 
-def deleteTask(todo_task_list_id, task_id):
-    return modifyTask(todo_task_list_id, task_id)
+
+def delete_task(todo_task_list_id, task_id):
+    return modify_task(todo_task_list_id, task_id)
