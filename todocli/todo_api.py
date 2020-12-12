@@ -3,6 +3,7 @@ For implementation details, refer to this source:
 https://docs.microsoft.com/de-de/graph/api/resources/todo-overview?view=graph-rest-1.0
 """
 from datetime import datetime
+from enum import Enum
 from typing import Union
 
 from todocli import api_urls
@@ -10,7 +11,7 @@ from todocli.rest_request import (
     RestRequestGet,
     RestRequestPost,
     RestRequestPatch,
-    RestRequestDelete,
+    RestRequestDelete, RestRequestWithBody,
 )
 from todocli.todo_api_util import datetime_to_api_timestamp
 
@@ -38,6 +39,53 @@ class TaskNotFoundByIndex(Exception):
         )
         super(TaskNotFoundByIndex, self).__init__(self.message)
 
+
+class RestRequestTask():
+    class Status(Enum):
+        Completed = 'completed'
+        NotStarted = 'notStarted'
+        InProgress = 'inProgress'
+        WaitingOnOthers = 'waitingOnOthers'
+        Deferred = 'deferred'
+
+    class Importance(Enum):
+        Low = 'low'
+        Normal = 'normal'
+        High = ''
+
+    def _get_request(self) -> RestRequestWithBody:
+        pass
+
+    def complete(self):
+        self._get_request()["completedDateTime"] = datetime_to_api_timestamp(datetime.now())
+        self.set_status(self.Status.Completed)
+
+    def set_status(self, status : Status):
+        self._get_request()["status"] = status.value
+
+    def set_importance(self, importance : Importance):
+        self._get_request()["importance"] = importance.value
+
+    def set_title(self, title: str):
+        self._get_request()["title"] = title
+
+
+class RestRequestTaskModify(RestRequestTask):
+    def __init__(self, list_name, task_name):
+        url = api_urls.modify_task(get_list_id_by_name(list_name),get_list_id_by_name(task_name))
+        self.request = RestRequestPatch(url)
+
+    def _get_request(self) -> RestRequestWithBody:
+        return self.request
+
+
+class RestRequestTaskNew(RestRequestTask):
+    def __init__(self, list_name, task_name):
+        url = api_urls.new_task(get_list_id_by_name(list_name))
+        self.request = RestRequestPost(url)
+
+    def _get_request(self) -> RestRequestWithBody:
+        return self.request
 
 def query_list_id_by_name(list_name):
     url = api_urls.query_list_id_by_name(list_name)
@@ -108,16 +156,19 @@ def get_task_id_by_name(list_name: str, task_name: str):
     except IndexError:
         raise TaskNotFoundByName(task_name, list_name)
 
+def get_task_id_by_list_position(list_name: str, task_list_position):
+    tasks = query_tasks(list_name, task_list_position + 1)
+    try:
+        return tasks[task_list_position]["id"]
+    except IndexError:
+        raise TaskNotFoundByIndex(task_list_position, list_name)
+
 
 def get_task_id(list_name: str, task_name_or_listpos: Union[str, int]):
     if isinstance(task_name_or_listpos, str):
         return get_task_id_by_name(list_name, task_name_or_listpos)
     elif isinstance(task_name_or_listpos, int):
-        tasks = query_tasks(list_name, task_name_or_listpos + 1)
-        try:
-            return tasks[task_name_or_listpos]["id"]
-        except IndexError:
-            raise TaskNotFoundByIndex(task_name_or_listpos, list_name)
+        return get_task_id_by_list_position(list_name, task_name_or_listpos)
     else:
         raise
 
