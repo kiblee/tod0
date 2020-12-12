@@ -4,14 +4,23 @@ import sys
 
 import todocli.todo_api as todo_api
 from todocli.datetime_parser import parse_datetime
-from todocli.error import error
+from todocli.error import error, eprint
+
+
+class InvalidTaskPath(Exception):
+    def __init__(self, path):
+        self.message = (
+            "Invalid path: '{}', path can only contain one '/'. "
+            "Please specify the task in format: '<list>/<task>'".format(path)
+        )
+        super(InvalidTaskPath, self).__init__(self.message)
 
 
 def parse_task_path(task_path):
     if "/" in task_path:
         elems = task_path.split("/")
         if len(elems) > 2:
-            error("Invalid path, path can only contain one '/'")
+            raise InvalidTaskPath(task_path)
         return elems[0], elems[1]
     else:
         return "Tasks", task_path
@@ -189,11 +198,13 @@ def main():
             except ArgumentParser.OnExit:
                 pass
             except todo_api.TaskNotFoundByName as e:
-                print(e.message)
+                eprint(e.message)
             except todo_api.ListNotFound as e:
-                print(e.message)
+                eprint(e.message)
             except todo_api.TaskNotFoundByIndex as e:
-                print(e.message)
+                eprint(e.message)
+            except InvalidTaskPath as e:
+                eprint(e.message)
             finally:
                 sys.stdout.flush()
                 sys.stderr.flush()

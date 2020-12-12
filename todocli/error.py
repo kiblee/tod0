@@ -1,6 +1,10 @@
 import sys
 
 
-def error(msg, *args, **kwargs):
-    print("Error:", msg.format(*args), file=sys.stderr, **kwargs)
+def eprint(*args):
+    print(*args, file=sys.stderr)
+
+
+def error(msg, *args):
+    eprint("Error:", msg.format(*args))
     sys.exit(-1)
