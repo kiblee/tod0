@@ -188,6 +188,12 @@ def main():
                 pass
             except ArgumentParser.OnExit:
                 pass
+            except todo_api.TaskNotFoundByName as e:
+                print(e.message)
+            except todo_api.ListNotFound as e:
+                print(e.message)
+            except todo_api.TaskNotFoundByIndex as e:
+                print(e.message)
             finally:
                 sys.stdout.flush()
                 sys.stderr.flush()

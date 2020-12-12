@@ -109,6 +109,13 @@ def query_lists():
     return new_list()
 
 
+def query_list_id_by_name(list_name):
+    return (
+        query_lists()
+        + ODataSystemQuery().filter_startsWith("displayName", list_name).get()
+    )
+
+
 def modify_list(todo_task_list_id):
     return "{}/lists/{}".format(base_api_url, todo_task_list_id)
 

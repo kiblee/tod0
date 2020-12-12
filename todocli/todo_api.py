@@ -17,13 +17,45 @@ from todocli.todo_api_util import datetime_to_api_timestamp
 list_ids_cached = {}
 
 
+class ListNotFound(Exception):
+    def __init__(self, list_name):
+        self.message = "List with name '{}' could not be found".format(list_name)
+        super(ListNotFound, self).__init__(self.message)
+
+
+class TaskNotFoundByName(Exception):
+    def __init__(self, task_name, list_name):
+        self.message = "Task with name '{}' could not be found in list '{}'".format(
+            task_name, list_name
+        )
+        super(TaskNotFoundByName, self).__init__(self.message)
+
+
+class TaskNotFoundByIndex(Exception):
+    def __init__(self, task_index, list_name):
+        self.message = "Task with index '{}' could not be found in list '{}'".format(
+            task_index, list_name
+        )
+        super(TaskNotFoundByIndex, self).__init__(self.message)
+
+
 def query_list_id_by_name(list_name):
-    url = api_urls.query_lists() + "?$filter=startswith(displayName,'{}')".format(
-        list_name
-    )
+    url = api_urls.query_list_id_by_name(list_name)
     res = RestRequestGet(url).execute()
 
-    return res[0]["id"]
+    try:
+        return res[0]["id"]
+    except IndexError:
+        raise ListNotFound(list_name)
+
+
+def get_list_id_by_name(list_name: str):
+    if list_name not in list_ids_cached:
+        list_id = query_list_id_by_name(list_name)
+        list_ids_cached[list_name] = list_id
+        return list_id
+    else:
+        return list_ids_cached[list_name]
 
 
 def query_tasks(list_name: str, num_tasks: int = 100):
@@ -36,15 +68,6 @@ def query_tasks(list_name: str, num_tasks: int = 100):
 def query_task(list_name: str, task_name: str):
     query_url = api_urls.query_task_by_name(get_list_id_by_name(list_name), task_name)
     return RestRequestGet(query_url).execute()
-
-
-def get_list_id_by_name(list_name: str):
-    if list_name not in list_ids_cached:
-        list_id = query_list_id_by_name(list_name)
-        list_ids_cached[list_name] = list_id
-        return list_id
-    else:
-        return list_ids_cached[list_name]
 
 
 def create_list(title: str):
@@ -83,7 +106,7 @@ def get_task_id_by_name(list_name: str, task_name: str):
     try:
         return query_task(list_name, task_name)[0]["id"]
     except IndexError:
-        raise Exception(f"Task not found. List: {list_name}, task: {task_name}")
+        raise TaskNotFoundByName(task_name, list_name)
 
 
 def get_task_id(list_name: str, task_name_or_listpos: Union[str, int]):
@@ -91,7 +114,10 @@ def get_task_id(list_name: str, task_name_or_listpos: Union[str, int]):
         return get_task_id_by_name(list_name, task_name_or_listpos)
     elif isinstance(task_name_or_listpos, int):
         tasks = query_tasks(list_name, task_name_or_listpos + 1)
-        return tasks[task_name_or_listpos]["id"]
+        try:
+            return tasks[task_name_or_listpos]["id"]
+        except IndexError:
+            raise TaskNotFoundByIndex(task_name_or_listpos, list_name)
     else:
         raise
 
