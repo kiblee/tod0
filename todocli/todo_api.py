@@ -1,6 +1,6 @@
 """
 For implementation details, refer to this source:
-https://docs.microsoft.com/de-de/graph/api/resources/todo-overview?view=graph-rest-1.0
+https://docs.microsoft.com/en-us/graph/api/resources/todo-overview?view=graph-rest-1.0
 """
 from datetime import datetime
 from enum import Enum
