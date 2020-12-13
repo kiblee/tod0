@@ -32,9 +32,6 @@ config_dir = "{}/.config/tod0".format(os.path.expanduser("~"))
 if not os.path.isdir(config_dir):
     os.makedirs(config_dir)
 
-# Check for api keys
-keys_path = os.path.join(config_dir, "keys.yml")
-
 
 def check_keys(keys):
     client_id = keys["client_id"]
@@ -54,6 +51,8 @@ def check_keys(keys):
         exit()
 
 
+# Check for api keys
+keys_path = os.path.join(config_dir, "keys.yml")
 if not os.path.isfile(keys_path):
     keys = {"client_id": "", "client_secret": ""}
 
