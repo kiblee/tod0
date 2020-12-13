@@ -11,7 +11,8 @@ from todocli.rest_request import (
     RestRequestGet,
     RestRequestPost,
     RestRequestPatch,
-    RestRequestDelete, RestRequestWithBody,
+    RestRequestDelete,
+    RestRequestWithBody,
 )
 from todocli.todo_api_util import datetime_to_api_timestamp
 
@@ -40,52 +41,64 @@ class TaskNotFoundByIndex(Exception):
         super(TaskNotFoundByIndex, self).__init__(self.message)
 
 
-class RestRequestTask():
+class _RestRequestTask:
     class Status(Enum):
-        Completed = 'completed'
-        NotStarted = 'notStarted'
-        InProgress = 'inProgress'
-        WaitingOnOthers = 'waitingOnOthers'
-        Deferred = 'deferred'
+        Completed = "completed"
+        NotStarted = "notStarted"
+        InProgress = "inProgress"
+        WaitingOnOthers = "waitingOnOthers"
+        Deferred = "deferred"
 
     class Importance(Enum):
-        Low = 'low'
-        Normal = 'normal'
-        High = ''
+        Low = "low"
+        Normal = "normal"
+        High = ""
 
-    def _get_request(self) -> RestRequestWithBody:
-        pass
+    def __init__(self):
+        self.request = None
 
-    def complete(self):
-        self._get_request()["completedDateTime"] = datetime_to_api_timestamp(datetime.now())
+    def set_completed(self):
+        self.request["completedDateTime"] = datetime_to_api_timestamp(datetime.now())
         self.set_status(self.Status.Completed)
 
-    def set_status(self, status : Status):
-        self._get_request()["status"] = status.value
+    def set_status(self, status: Status):
+        self.request["status"] = status.value
 
-    def set_importance(self, importance : Importance):
-        self._get_request()["importance"] = importance.value
+    def set_importance(self, importance: Importance):
+        self.request["importance"] = importance.value
 
     def set_title(self, title: str):
-        self._get_request()["title"] = title
+        self.request["title"] = title
+
+    def set_reminder(self, reminder_datetime):
+        self.request["isReminderOn"] = True
+        self.request["reminderDateTime"] = datetime_to_api_timestamp(reminder_datetime)
+
+    def execute(self):
+        return self.request.execute()
 
 
-class RestRequestTaskModify(RestRequestTask):
+class RestRequestTaskModify(_RestRequestTask):
     def __init__(self, list_name, task_name):
-        url = api_urls.modify_task(get_list_id_by_name(list_name),get_list_id_by_name(task_name))
+        super().__init__()
+
+        url = api_urls.modify_task(
+            get_list_id_by_name(list_name), get_task_id(list_name, task_name)
+        )
         self.request = RestRequestPatch(url)
 
-    def _get_request(self) -> RestRequestWithBody:
-        return self.request
 
-
-class RestRequestTaskNew(RestRequestTask):
+class RestRequestTaskNew(_RestRequestTask):
     def __init__(self, list_name, task_name):
+        super().__init__()
+
         url = api_urls.new_task(get_list_id_by_name(list_name))
         self.request = RestRequestPost(url)
+        self.set_title(task_name)
 
     def _get_request(self) -> RestRequestWithBody:
         return self.request
+
 
 def query_list_id_by_name(list_name):
     url = api_urls.query_list_id_by_name(list_name)
@@ -132,15 +145,11 @@ def rename_list(old_list_title: str, new_list_title: str):
     return request.execute()
 
 
-def create_task(text: str, folder: str, reminder_datetime: datetime = None):
-    todoTaskListId = get_list_id_by_name(folder)
-
-    request = RestRequestPost(api_urls.new_task(todoTaskListId))
-    request["title"] = text
+def create_task(task_name: str, list_name: str, reminder_datetime: datetime = None):
+    request = RestRequestTaskNew(list_name, task_name)
 
     if reminder_datetime is not None:
-        request["isReminderOn"] = True
-        request["reminderDateTime"] = datetime_to_api_timestamp(reminder_datetime)
+        request.set_reminder(reminder_datetime)
 
     return request.execute()
 
@@ -155,6 +164,7 @@ def get_task_id_by_name(list_name: str, task_name: str):
         return query_task(list_name, task_name)[0]["id"]
     except IndexError:
         raise TaskNotFoundByName(task_name, list_name)
+
 
 def get_task_id_by_list_position(list_name: str, task_list_position):
     tasks = query_tasks(list_name, task_list_position + 1)
@@ -174,13 +184,8 @@ def get_task_id(list_name: str, task_name_or_listpos: Union[str, int]):
 
 
 def complete_task(list_name: str, task_name: Union[str, int]):
-    task_id = get_task_id(list_name, task_name)
-
-    url = api_urls.modify_task(get_list_id_by_name(list_name), task_id)
-
-    request = RestRequestPatch(url)
-    request["completedDateTime"] = datetime_to_api_timestamp(datetime.now())
-    request["status"] = "completed"
+    request = RestRequestTaskModify(list_name, task_name)
+    request.set_completed()
     request.execute()
 
 
