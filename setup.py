@@ -1,11 +1,11 @@
-import setuptools
+from setuptools import setup, find_packages
 
-setuptools.setup(
+setup(
     name="tod0",
-    version="0.5.0",
+    version="0.6.0",
     author="kiblee",
     author_email="kiblee@pm.me",
-    packages=["todocli", "todocli.test"],
+    packages=find_packages(),
     url="https://github.com/kiblee/tod0",
     license="LICENSE",
     description="A Terminal Client for Microsoft To-Do.",
@@ -14,11 +14,13 @@ setuptools.setup(
         "pyyaml",
         "requests",
         "requests_oauthlib",
+        "tzlocal",
     ],
     include_package_data=True,
     entry_points="""
         [console_scripts]
         tod0=todocli.interface:run
+        todocli=todocli.cli:main
     """,
     python_requires=">=3.6",
 )
