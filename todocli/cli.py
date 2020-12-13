@@ -57,12 +57,10 @@ def new(args):
         reminder_datetime = parse_datetime(reminder_date_time_str)
 
     todo_api.create_task(name, task_list, reminder_datetime)
-    pass
 
 
 def newl(args):
     todo_api.create_list(args.list_name)
-    pass
 
 
 def try_parse_as_int(input_str: str):
@@ -76,7 +74,6 @@ def complete(args):
     task_list, name = parse_task_path(args.task_name)
 
     todo_api.complete_task(task_list, try_parse_as_int(name))
-    pass
 
 
 def rm(args):
@@ -225,4 +222,3 @@ def main():
 if __name__ == "__main__":
     sys.argv.append("-i")
     main()
-    exit()
