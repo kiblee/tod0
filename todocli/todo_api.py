@@ -107,7 +107,7 @@ def get_list_id_by_name(list_name: str):
 
 
 def query_tasks(list_name: str, num_tasks: int = 100):
-    query_url = api_urls.query_tasks_from_list(
+    query_url = api_urls.query_completed_tasks(
         get_list_id_by_name(list_name), num_tasks
     )
     return RestRequestGet(query_url).execute()
@@ -146,7 +146,7 @@ def create_task(text: str, folder: str, reminder_datetime: datetime = None):
 
 
 def query_lists():
-    lists = RestRequestGet(api_urls.query_lists()).execute()
+    lists = RestRequestGet(api_urls.all_lists()).execute()
     return lists
 
 
