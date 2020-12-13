@@ -27,12 +27,10 @@ def parse_task_path(task_path):
 
 
 def print_list(item_list, print_line_nums):
-    i = 0
-    for x in item_list:
+    for i, x in enumerate(item_list):
         if print_line_nums:
             print("[{}] ".format(i), end="")
         print(x)
-        i += 1
 
 
 def ls(args):
