@@ -13,7 +13,7 @@ class ODataSystemQuery:
         Ascending = "asc"
         Descending = "desc"
 
-    def add_to_query(self, expr):
+    def _add_to_query(self, expr):
         if len(self.query_expr) == 1:
             self.query_expr += expr
         else:
@@ -23,11 +23,11 @@ class ODataSystemQuery:
         self.query_expr = "?"
 
     def count(self):
-        self.add_to_query("$count=true")
+        self._add_to_query("$count=true")
         return self
 
     def expand(self, expr):
-        self.add_to_query("$expand={}".format(expr))
+        self._add_to_query("$expand={}".format(expr))
         return self
 
     def filter_startsWith(self, property_name, expr):
@@ -67,15 +67,15 @@ class ODataSystemQuery:
         return self
 
     def filter(self, expr):
-        self.add_to_query("$filter={}".format(expr))
+        self._add_to_query("$filter={}".format(expr))
         return self
 
     def format(self, ftmat: Format):
-        self.add_to_query("$format={}".format(ftmat.value))
+        self._add_to_query("$format={}".format(ftmat.value))
         return self
 
     def orderBy(self, expr, sort_order: SortOrder = SortOrder.Ascending):
-        self.add_to_query("$orderby={} {}".format(expr, sort_order.value))
+        self._add_to_query("$orderby={} {}".format(expr, sort_order.value))
         return self
 
     def search(self, expr):
@@ -88,7 +88,7 @@ class ODataSystemQuery:
         raise Exception("Not implemented")
 
     def top(self, num_elements):
-        self.add_to_query("$top={}".format(num_elements))
+        self._add_to_query("$top={}".format(num_elements))
         return self
 
     def get(self):
