@@ -79,6 +79,7 @@ Specifying time:
         e.g. 24.12. 12:00
         e.g. 7.4.   9:15"""
 
+
 class InvalidTaskPath(Exception):
     def __init__(self, path):
         self.message = (
@@ -97,8 +98,10 @@ def parse_task_path(task_path):
     else:
         return "Tasks", task_path
 
+
 def print_help():
     print(help_msg)
+
 
 def print_list(item_list, print_line_nums):
     for i, x in enumerate(item_list):
@@ -245,6 +248,7 @@ def setup_parser():
     )
 
     return parser
+
 
 def main():
     try:
