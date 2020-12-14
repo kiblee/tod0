@@ -20,9 +20,9 @@ def parse_datetime(datetime_str: str):
     if re.match(r"([0-9]{1,2}h)", datetime_str):
         """ e.g. 1h / 12h """
         return datetime.now() + timedelta(hours=int(datetime_str[:-1]))
-    if datetime_str == "morgen":
+    if datetime_str == "morning":
         return datetime.now().replace(hour=7) + timedelta(days=1)
-    if datetime_str == "abend":
+    if datetime_str == "evening":
         dt = datetime.now()
         if dt.hour > 18:
             dt = dt + timedelta(days=1)
