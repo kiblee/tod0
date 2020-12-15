@@ -3,58 +3,154 @@ For implementation details, refer to this source:
 https://docs.microsoft.com/en-us/graph/api/resources/todo-overview?view=graph-rest-1.0
 """
 from datetime import datetime
-from typing import Union, List
 
-from todocli.task import Task
-from todocli.todo_api import querys
-from todocli.todo_api.rest_request_list import RestRequestListModify, RestRequestListNew
-from todocli.todo_api.rest_request_task import (
-    RestRequestTaskModify,
-    RestRequestTaskNew,
-    RestRequestTaskDelete,
+from todocli import api_urls
+from todocli.rest_request import (
+    RestRequestWithBody,
+    RestRequestPatch,
+    RestRequestPost,
+    RestRequestDelete,
 )
+from todocli.task import Task
+from todocli.todo_api.exceptions import TaskNotFoundByName
+from todocli.todo_api.queries import (
+    get_list_id_by_name,
+    get_task_id,
+    query_tasks,
+    query_task,
+    query_list,
+    query_lists,
+)
+from todocli.todo_api.todo_api_util import datetime_to_api_timestamp
+from todocli.todolist import TodoList
 
 
-def get_lists():
-    return querys.query_lists()
+class _RestRequestTask:
+    def __init__(self):
+        self.request: RestRequestWithBody = None
+
+    def set_completed(self):
+        self.request["completedDateTime"] = datetime_to_api_timestamp(datetime.now())
+        self.set_status(Task.Status.Completed)
+        return self
+
+    def set_status(self, status: Task.Status):
+        self.request["status"] = status.value
+        return self
+
+    def set_importance(self, importance: Task.Importance):
+        self.request["importance"] = importance.value
+        return self
+
+    def set_title(self, title: str):
+        self.request["title"] = title
+        return self
+
+    def set_reminder(self, reminder_datetime):
+        self.request["isReminderOn"] = True
+        self.request["reminderDateTime"] = datetime_to_api_timestamp(reminder_datetime)
+        return self
+
+    def execute(self):
+        return self.request.execute()
 
 
-def get_list(list_name):
-    return querys.query_list(list_name)
+class GetTask:
+    def __init__(self, list_name, task_name):
+        self.list_name = list_name
+        self.task_name = task_name
+
+    def execute(self):
+        try:
+            result = query_task(self.list_name, self.task_name)
+            return Task(result)
+        except IndexError:
+            raise TaskNotFoundByName(self.task_name, self.list_name)
 
 
-def create_list(title: str):
-    return RestRequestListNew(title).execute()
+class GetTasks:
+    def __init__(self, list_name, completed=True, num_tasks=100):
+        self.list_name = list_name
+        self.completed = completed
+        self.num_tasks = num_tasks
+
+    def execute(self):
+        result = query_tasks(self.list_name, self.completed, self.num_tasks)
+        return [Task(x) for x in result]
 
 
-def rename_list(old_list_title: str, new_list_title: str):
-    return (
-        RestRequestListModify(old_list_title).set_display_name(new_list_title).execute()
-    )
+class ModifyTask(_RestRequestTask):
+    def __init__(self, list_name, task_name):
+        super().__init__()
+
+        url = api_urls.modify_task(
+            get_list_id_by_name(list_name), get_task_id(list_name, task_name)
+        )
+        self.request = RestRequestPatch(url)
 
 
-def get_tasks(list_name) -> List[Task]:
-    query_result = querys.query_tasks(list_name)
+class CreateTask(_RestRequestTask):
+    def __init__(self, list_name, task_name):
+        super().__init__()
 
-    return [Task(x) for x in query_result]
-
-
-def get_task(list_name, task_name):
-    return Task(querys.query_task(list_name, task_name))
-
-
-def create_task(task_name: str, list_name: str, reminder_datetime: datetime = None):
-    request = RestRequestTaskNew(list_name, task_name)
-
-    if reminder_datetime is not None:
-        request.set_reminder(reminder_datetime)
-
-    return request.execute()
+        url = api_urls.new_task(get_list_id_by_name(list_name))
+        self.request = RestRequestPost(url)
+        self.set_title(task_name)
 
 
-def complete_task(list_name: str, task_name: Union[str, int]):
-    return RestRequestTaskModify(list_name, task_name).set_completed().execute()
+class DeleteTask(RestRequestDelete):
+    def __init__(self, list_name, task_name):
+        url = api_urls.delete_task(
+            get_list_id_by_name(list_name), get_task_id(list_name, task_name)
+        )
+        super().__init__(url)
 
 
-def remove_task(task_list, task_name_or_listpos):
-    return RestRequestTaskDelete(task_list, task_name_or_listpos).execute()
+class _RestRequestList:
+    def __init__(self):
+        self.request: RestRequestWithBody = None
+
+    def set_display_name(self, list_name):
+        self.request["displayName"] = list_name
+        return self
+
+    def execute(self):
+        self.request.execute()
+
+
+class GetList:
+    def __init__(self, list_name):
+        self.list_name = list_name
+
+    def execute(self):
+        result = query_list(self.list_name)
+        return TodoList(result)
+
+
+class GetLists:
+    def execute(self):
+        result = query_lists()
+        return [TodoList(x) for x in result]
+
+
+class CreateList(_RestRequestList):
+    def __init__(self, list_name):
+        super().__init__()
+
+        url = api_urls.new_list()
+        self.request = RestRequestPost(url)
+        self.set_display_name(list_name)
+
+
+class ModifyList(_RestRequestList):
+    def __init__(self, list_name):
+        super().__init__()
+
+        url = api_urls.modify_list(get_list_id_by_name(list_name))
+        self.request = RestRequestPatch(url)
+
+
+class DeleteList(RestRequestDelete):
+    def __init__(self, list_name):
+        url = api_urls.delete_list(get_list_id_by_name(list_name))
+        super().__init__(url)

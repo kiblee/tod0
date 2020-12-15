@@ -29,11 +29,11 @@ def api_timestamp_to_datetime(api_dt: Union[str, dict]):
     if isinstance(api_dt, str):
         api_dt_str_mod = api_dt[:-2]
     elif isinstance(api_dt, dict):
-        api_dt_str_mod = api_dt['dateTime'][:-2]
+        api_dt_str_mod = api_dt["dateTime"][:-2]
     else:
         raise
 
-    dt = datetime.strptime(api_dt_str_mod, '%Y-%m-%dT%H:%M:%S.%f')
+    dt = datetime.strptime(api_dt_str_mod, "%Y-%m-%dT%H:%M:%S.%f")
     dt = pytz.utc.localize(dt)
 
     return dt
