@@ -31,7 +31,7 @@ def all_lists():
     return _lists()
 
 
-def query_list_id_by_name(list_name):
+def query_list_by_name(list_name):
     return (
         _lists() + ODataSystemQuery().filter_startsWith("displayName", list_name).get()
     )

@@ -1,11 +1,16 @@
 import argparse
 import shlex
 import sys
-from typing import Optional, IO
 
-import todocli.todo_api as todo_api
+import todocli.todo_api.todo_api as todo_api
 from todocli.datetime_parser import parse_datetime
-from todocli.error import error, eprint
+from todocli.error import eprint
+from todocli.task import Task
+from todocli.todo_api.exceptions import (
+    TaskNotFoundByName,
+    ListNotFound,
+    TaskNotFoundByIndex,
+)
 
 help_msg = """
 NAME
@@ -111,14 +116,15 @@ def print_list(item_list, print_line_nums):
 
 
 def ls(args):
-    lists = todo_api.query_lists()
+    lists = todo_api.get_lists()
     lists_names = [task_list["displayName"] for task_list in lists]
     print_list(lists_names, args.display_linenums)
 
 
 def lst(args):
-    tasks = todo_api.query_tasks(args.list_name)
-    tasks_titles = [x["title"] for x in tasks]
+    tasks = todo_api.get_tasks(args.list_name)
+
+    tasks_titles = [x.title for x in tasks]
     print_list(tasks_titles, args.display_linenums)
 
 
@@ -198,7 +204,7 @@ def setup_parser():
             nargs="?",
             default="Tasks",
             help="This optional argument specifies the list from which the tasks are displayed."
-            "If this parameter is omitted, \
+                 "If this parameter is omitted, \
                                     all tasks from the default task list will be displayed",
         )
         subparser.set_defaults(func=lst)
@@ -264,19 +270,20 @@ def main():
                 namespace, args = parser.parse_known_args()
                 parser.parse_args(args, namespace)
 
-                namespace.func(namespace)
+                if namespace.func is not None:
+                    namespace.func(namespace)
 
-            except TypeError:
-                parser.print_help()
+            # except TypeError:
+            #    parser.print_help()
             except argparse.ArgumentError:
                 pass
             except ArgumentParser.OnExit:
                 pass
-            except todo_api.TaskNotFoundByName as e:
+            except TaskNotFoundByName as e:
                 eprint(e.message)
-            except todo_api.ListNotFound as e:
+            except ListNotFound as e:
                 eprint(e.message)
-            except todo_api.TaskNotFoundByIndex as e:
+            except TaskNotFoundByIndex as e:
                 eprint(e.message)
             except InvalidTaskPath as e:
                 eprint(e.message)
