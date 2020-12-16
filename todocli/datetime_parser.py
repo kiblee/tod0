@@ -89,7 +89,9 @@ def parse_datetime(datetime_str: str):
             )
 
         if re.match(
-            r"([0-9]{1,2}\.[0-9]{1,2}\. [0-9]{1,2}:[0-9]{2})", datetime_str, re.IGNORECASE
+            r"([0-9]{1,2}\.[0-9]{1,2}\. [0-9]{1,2}:[0-9]{2})",
+            datetime_str,
+            re.IGNORECASE,
         ):
             """ e.g. 17.01. 17:00 """
             split_str = datetime_str.split(" ")

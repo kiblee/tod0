@@ -77,7 +77,14 @@ class TestDatetimeParser(unittest.TestCase):
             parse_datetime(time)
 
     def test_invalid_time(self):
-        invalid_times = ["24:00", "25:00", "25123:00", "0:12345", "12:30 sam", "12:30 pom"]
+        invalid_times = [
+            "24:00",
+            "25:00",
+            "25123:00",
+            "0:12345",
+            "12:30 sam",
+            "12:30 pom",
+        ]
 
         for time in invalid_times:
             print(f"testing time: {time}")
