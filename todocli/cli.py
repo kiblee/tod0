@@ -3,7 +3,11 @@ import shlex
 import sys
 
 import todocli.todo_api.todo_api as todo_api
-from todocli.datetime_parser import parse_datetime
+from todocli.datetime_parser import (
+    parse_datetime,
+    TimeExpressionNotRecognized,
+    ErrorParsingTime,
+)
 from todocli.error import eprint
 from todocli.todo_api.exceptions import (
     TaskNotFoundByName,
@@ -69,19 +73,30 @@ Specifying time:
         Max: 99h
         
     morning
-        Tomorrow morning at 07:00 AM
+         Today at 07:00 AM if current time < 07:00 AM, otherwise tomorrow
         
     evening
-        Today at 06:00 PM if current time < 06:00 PM, otherwise tomorrow at 06:00 PM
+        Today at 06:00 PM if current time < 06:00 PM, otherwise tomorrow
         
     {hour}:{minute}
-        Today at {hour}:{minute}
+        Today at {hour}:{minute} if current time < {hour}:{minute}, otherwise tomorrow 
         e.g. 9:30, 09:30, 17:15
+        
+    {hour}:{minute} am|pm 
+        Today at {hour}:{minute} am|pm  if current time < {hour}:{minute} am|pm, otherwise tomorrow
+        e.g. 9:30 am, 12:00 am, 10:15 pm
         
     {day}.{month}. {hour}:{minute}
         The given day at {hour}:{minute}
         e.g. 24.12. 12:00
-        e.g. 7.4.   9:15"""
+        e.g. 7.4.   9:15
+        
+    {month}/{day}. {hour}:{minute} am|pm
+        The given day at {hour}:{minute} am|pm
+        e.g. 12/24 12:00 pm
+        e.g. 03/02   9:15
+        e.g. 3/2   09:15
+        """
 
 
 class InvalidTaskPath(Exception):
@@ -274,7 +289,7 @@ def main():
                 if namespace.func is not None:
                     namespace.func(namespace)
                 else:
-                    #No argument was provided
+                    # No argument was provided
                     parser.print_usage()
 
             except argparse.ArgumentError:
@@ -288,6 +303,10 @@ def main():
             except TaskNotFoundByIndex as e:
                 eprint(e.message)
             except InvalidTaskPath as e:
+                eprint(e.message)
+            except TimeExpressionNotRecognized as e:
+                eprint(e.message)
+            except ErrorParsingTime as e:
                 eprint(e.message)
             finally:
                 sys.stdout.flush()
@@ -307,5 +326,5 @@ def main():
 
 
 if __name__ == "__main__":
-    #sys.argv.append("-i")
+    # sys.argv.append("-i")
     main()
