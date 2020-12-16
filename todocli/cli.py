@@ -132,7 +132,7 @@ def new(args):
 
     reminder_date_time_str = args.reminder
 
-    taskRequest = todo_api.CreateTask(name, task_list)
+    taskRequest = todo_api.CreateTask(task_list, name)
 
     if reminder_date_time_str is not None:
         reminder_datetime = parse_datetime(reminder_date_time_str)
