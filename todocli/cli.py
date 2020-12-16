@@ -273,6 +273,9 @@ def main():
 
                 if namespace.func is not None:
                     namespace.func(namespace)
+                else:
+                    #No argument was provided
+                    parser.print_usage()
 
             except argparse.ArgumentError:
                 pass
@@ -304,5 +307,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.argv.append("-i")
+    #sys.argv.append("-i")
     main()
