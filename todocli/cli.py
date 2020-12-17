@@ -89,12 +89,7 @@ Specifying time:
         The given day at {hour}:{minute}
         e.g. 24.12. 12:00
         e.g. 7.4.   9:15
-        
-    {month}/{day}. {hour}:{minute} am|pm
-        The given day at {hour}:{minute} am|pm
-        e.g. 12/24 12:00 pm
-        e.g. 03/02   9:15
-        e.g. 3/2   09:15"""
+        """
 
 
 class InvalidTaskPath(Exception):

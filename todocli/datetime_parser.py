@@ -9,14 +9,14 @@ def parse_hour_minute(input_str):
     return hour, minute
 
 
-def parse_day_month(input_str):
+def parse_day_month_DD_MM(input_str):
     split_str = input_str.split(".")
     day = int(split_str[0])
     month = int(split_str[1])
     return day, month
 
 
-def parse_day_month_american(input_str):
+def parse_day_month_MM_DD(input_str):
     split_str = input_str.split("/")
     month = int(split_str[0])
     day = int(split_str[1])
@@ -73,13 +73,12 @@ def parse_datetime(datetime_str: str):
             split_str = datetime_str.split(" ")
             hour, minute = parse_hour_minute(split_str[0])
 
-            dt = datetime.now()
-
             if split_str[1] == "am":
                 if hour == 12:
                     hour = 0
             else:
                 hour = hour + 12
+
             return add_day_if_past(
                 datetime.now().replace(
                     hour=hour, minute=minute, second=0, microsecond=0
@@ -102,7 +101,7 @@ def parse_datetime(datetime_str: str):
         ):
             """ e.g. 17.01. 17:00 """
             split_str = datetime_str.split(" ")
-            day, month = parse_day_month(split_str[0])
+            day, month = parse_day_month_DD_MM(split_str[0])
             hour, minute = parse_hour_minute(split_str[1])
             return datetime.now().replace(
                 day=day, month=month, hour=hour, minute=minute, second=0, microsecond=0
@@ -113,9 +112,9 @@ def parse_datetime(datetime_str: str):
             datetime_str,
             re.IGNORECASE,
         ):
-            """ e.g. 17.01. 17:00 """
+            """ e.g. 17/01 5:00 pm """
             split_str = datetime_str.split(" ")
-            day, month = parse_day_month_american(split_str[0])
+            day, month = parse_day_month_MM_DD(split_str[0])
             hour, minute = parse_hour_minute(split_str[1])
             return datetime.now().replace(
                 day=day, month=month, hour=hour, minute=minute, second=0, microsecond=0

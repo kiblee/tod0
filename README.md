@@ -94,7 +94,7 @@ Usage:
         
         If 'list_name' is omitted, the default task list will be used. 
         'task_number' is the position displayed when specifying option '-n'. 
-           
+       
     Specifying time:
         For options which take 'time' as a parameter, 'time' can be one of the following:
         
@@ -124,13 +124,6 @@ Usage:
             The given day at {hour}:{minute}
             e.g. 24.12. 12:00
             e.g. 7.4.   9:15
-            
-        {month}/{day}. {hour}:{minute} am|pm
-            The given day at {hour}:{minute} am|pm
-            e.g. 12/24 12:00 pm
-            e.g. 03/02   9:15
-            e.g. 3/2   09:15
-
             
     
 Features

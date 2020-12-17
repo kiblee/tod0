@@ -20,21 +20,21 @@ class TestDatetimeParser(unittest.TestCase):
         dt = add_day_if_past(dt)
         assert dt.day == dt_now.day
 
-    def test_american_time1(self):
+    def test_am_pm_time1(self):
         input_str = "07:00 pm"
         dt = parse_datetime(input_str)
         dt_expected = datetime.now().replace(hour=19, minute=0, second=0, microsecond=0)
         dt_expected = add_day_if_past(dt_expected)
         assert dt == dt_expected
 
-    def test_american_time2(self):
+    def test_am_pm_time2(self):
         input_str = "7:00 pm"
         dt = parse_datetime(input_str)
         dt_expected = datetime.now().replace(hour=19, minute=0, second=0, microsecond=0)
         dt_expected = add_day_if_past(dt_expected)
         assert dt == dt_expected
 
-    def test_american_time3(self):
+    def test_am_pm_time3(self):
         input_str = "12:00 am"
         dt = parse_datetime(input_str)
         dt_expected = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -60,16 +60,16 @@ class TestDatetimeParser(unittest.TestCase):
             "24.6. 12:00",
             "6.6. 06:06",
             "6.6. 6:06",
-            "04/27 12:00 am",
-            "04/27 2:00 am",
-            "04/27 3:00 pm",
-            "04/27 10:00 pm",
-            "4/27 10:00 pm",
-            "4/27 09:00 pm",
-            "4/27 9:00 pm",
-            "4/4 9:00 pm",
-            "4/4 09:00 pm",
-            "4/4 12:00 pm",
+            # "04/27 12:00 am",
+            # "04/27 2:00 am",
+            # "04/27 3:00 pm",
+            # "04/27 10:00 pm",
+            # "4/27 10:00 pm",
+            # "4/27 09:00 pm",
+            # "4/27 9:00 pm",
+            # "4/4 9:00 pm",
+            # "4/4 09:00 pm",
+            # "4/4 12:00 pm",
             "morning",
             "evening",
             "tomorrow",
