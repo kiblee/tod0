@@ -264,10 +264,12 @@ def main():
                 namespace, args = parser.parse_known_args()
                 parser.parse_args(args, namespace)
 
-                namespace.func(namespace)
+                if namespace.func is not None:
+                    namespace.func(namespace)
+                else:
+                    # No argument was provided
+                    parser.print_usage()
 
-            except TypeError:
-                parser.print_help()
             except argparse.ArgumentError:
                 pass
             except ArgumentParser.OnExit:
