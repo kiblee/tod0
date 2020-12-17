@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from todocli.datetime_parser import (
     parse_datetime,
-    add_day_if_datetime_is_in_past,
+    add_day_if_past,
     ErrorParsingTime,
     TimeExpressionNotRecognized,
 )
@@ -13,32 +13,32 @@ class TestDatetimeParser(unittest.TestCase):
     def test_sadd_day_if_datetime_is_in_past(self):
         dt_now = datetime.now()
         dt = dt_now - timedelta(minutes=1)
-        dt = add_day_if_datetime_is_in_past(dt)
+        dt = add_day_if_past(dt)
         assert dt.day > dt_now.day
 
         dt = dt_now + timedelta(hours=1)
-        dt = add_day_if_datetime_is_in_past(dt)
+        dt = add_day_if_past(dt)
         assert dt.day == dt_now.day
 
     def test_american_time1(self):
         input_str = "07:00 pm"
         dt = parse_datetime(input_str)
         dt_expected = datetime.now().replace(hour=19, minute=0, second=0, microsecond=0)
-        dt_expected = add_day_if_datetime_is_in_past(dt_expected)
+        dt_expected = add_day_if_past(dt_expected)
         assert dt == dt_expected
 
     def test_american_time2(self):
         input_str = "7:00 pm"
         dt = parse_datetime(input_str)
         dt_expected = datetime.now().replace(hour=19, minute=0, second=0, microsecond=0)
-        dt_expected = add_day_if_datetime_is_in_past(dt_expected)
+        dt_expected = add_day_if_past(dt_expected)
         assert dt == dt_expected
 
     def test_american_time3(self):
         input_str = "12:00 am"
         dt = parse_datetime(input_str)
         dt_expected = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        dt_expected = add_day_if_datetime_is_in_past(dt_expected)
+        dt_expected = add_day_if_past(dt_expected)
         assert dt == dt_expected
 
     def test_time_strings(self):

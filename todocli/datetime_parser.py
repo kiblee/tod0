@@ -23,7 +23,8 @@ def parse_day_month_american(input_str):
     return day, month
 
 
-def add_day_if_datetime_is_in_past(dt: datetime) -> datetime:
+def add_day_if_past(dt: datetime) -> datetime:
+    """This function will add a day to the datetime object 'dt' when 'dt' is in the past"""
     dt_now = datetime.now()
     if dt < dt_now:
         return dt + timedelta(days=1)
@@ -51,7 +52,7 @@ def parse_datetime(datetime_str: str):
 
         if datetime_str == "morning":
             dt = datetime.now()
-            return add_day_if_datetime_is_in_past(
+            return add_day_if_past(
                 dt.replace(hour=7, minute=0, second=0, microsecond=0)
             )
 
@@ -63,7 +64,7 @@ def parse_datetime(datetime_str: str):
 
         if datetime_str == "evening":
             dt = datetime.now()
-            return add_day_if_datetime_is_in_past(
+            return add_day_if_past(
                 dt.replace(hour=18, minute=0, second=0, microsecond=0)
             )
 
@@ -79,7 +80,7 @@ def parse_datetime(datetime_str: str):
                     hour = 0
             else:
                 hour = hour + 12
-            return add_day_if_datetime_is_in_past(
+            return add_day_if_past(
                 datetime.now().replace(
                     hour=hour, minute=minute, second=0, microsecond=0
                 )
@@ -88,7 +89,7 @@ def parse_datetime(datetime_str: str):
         if re.match(r"([0-9]{1,2}:[0-9]{2})", datetime_str, re.IGNORECASE):
             """ e.g. 17:00 """
             hour, minute = parse_hour_minute(datetime_str)
-            return add_day_if_datetime_is_in_past(
+            return add_day_if_past(
                 datetime.now().replace(
                     hour=hour, minute=minute, second=0, microsecond=0
                 )
