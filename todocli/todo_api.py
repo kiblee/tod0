@@ -3,7 +3,6 @@ For implementation details, refer to this source:
 https://docs.microsoft.com/en-us/graph/api/resources/todo-overview?view=graph-rest-1.0
 """
 from datetime import datetime
-from enum import Enum
 from typing import Union
 
 from todocli import api_urls
@@ -14,6 +13,7 @@ from todocli.rest_request import (
     RestRequestDelete,
     RestRequestWithBody,
 )
+from todocli.task import Task
 from todocli.todo_api_util import datetime_to_api_timestamp
 
 list_ids_cached = {}
@@ -42,29 +42,17 @@ class TaskNotFoundByIndex(Exception):
 
 
 class _RestRequestTask:
-    class Status(Enum):
-        Completed = "completed"
-        NotStarted = "notStarted"
-        InProgress = "inProgress"
-        WaitingOnOthers = "waitingOnOthers"
-        Deferred = "deferred"
-
-    class Importance(Enum):
-        Low = "low"
-        Normal = "normal"
-        High = ""
-
     def __init__(self):
         self.request = None
 
     def set_completed(self):
         self.request["completedDateTime"] = datetime_to_api_timestamp(datetime.now())
-        self.set_status(self.Status.Completed)
+        self.set_status(Task.Status.Completed)
 
-    def set_status(self, status: Status):
+    def set_status(self, status: Task.Status):
         self.request["status"] = status.value
 
-    def set_importance(self, importance: Importance):
+    def set_importance(self, importance: Task.Importance):
         self.request["importance"] = importance.value
 
     def set_title(self, title: str):
