@@ -22,6 +22,9 @@ class RestRequest:
         self.evaluateResult(o)
         return self.parse_contents(o)
 
+    def execute(self):
+        pass
+
 
 class RestRequestWithBody(RestRequest):
     def __init__(self, url):
