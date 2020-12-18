@@ -10,7 +10,7 @@ from todocli.datetime_parser import (
 
 
 class TestDatetimeParser(unittest.TestCase):
-    def test_sadd_day_if_datetime_is_in_past(self):
+    def test_add_day_if_datetime_is_in_past(self):
         dt_now = datetime.now()
         dt = dt_now - timedelta(minutes=1)
         dt = add_day_if_past(dt)
