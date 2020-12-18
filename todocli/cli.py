@@ -2,13 +2,17 @@ import argparse
 import shlex
 import sys
 
-import todocli.todo_api as todo_api
-from todocli.datetime_parser import (
-    parse_datetime,
-    TimeExpressionNotRecognized,
-    ErrorParsingTime,
+from todocli.datetime_parser import parse_datetime
+from todocli.error import eprint
+from todocli.task import Task
+from todocli.todolist import TodoList
+from todocli.error import eprint
+from todocli.todo_api import todo_api
+from todocli.todo_api.exceptions import (
+    ListNotFound,
+    TaskNotFoundByIndex,
+    TaskNotFoundByName,
 )
-from todocli.error import error, eprint
 from todocli.help_msg import help_msg
 
 
@@ -43,13 +47,14 @@ def print_list(item_list, print_line_nums):
 
 
 def ls(args):
-    lists = todo_api.query_lists()
-    lists_names = [l.display_name for l in lists]
+    lists = todo_api.GetLists().execute()
+    lists_names = [task_list.display_name for task_list in lists]
     print_list(lists_names, args.display_linenums)
 
 
 def lst(args):
-    tasks = todo_api.query_tasks(args.list_name)
+    tasks = todo_api.GetTasks(args.list_name).execute()
+
     tasks_titles = [x.title for x in tasks]
     print_list(tasks_titles, args.display_linenums)
 
@@ -58,16 +63,18 @@ def new(args):
     task_list, name = parse_task_path(args.task_name)
 
     reminder_date_time_str = args.reminder
-    reminder_datetime = None
+
+    taskRequest = todo_api.CreateTask(task_list, name)
 
     if reminder_date_time_str is not None:
         reminder_datetime = parse_datetime(reminder_date_time_str)
+        taskRequest.set_reminder(reminder_datetime)
 
-    todo_api.create_task(name, task_list, reminder_datetime)
+    taskRequest.execute()
 
 
 def newl(args):
-    todo_api.create_list(args.list_name)
+    todo_api.CreateList(args.list_name).execute()
 
 
 def try_parse_as_int(input_str: str):
@@ -79,12 +86,13 @@ def try_parse_as_int(input_str: str):
 
 def complete(args):
     task_list, name = parse_task_path(args.task_name)
-    todo_api.complete_task(task_list, try_parse_as_int(name))
+
+    todo_api.ModifyTask(task_list, try_parse_as_int(name)).set_completed().execute()
 
 
 def rm(args):
     task_list, name = parse_task_path(args.task_name)
-    todo_api.remove_task(task_list, try_parse_as_int(name))
+    todo_api.DeleteTask(task_list, try_parse_as_int(name)).execute()
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -205,11 +213,11 @@ def main():
                 pass
             except ArgumentParser.OnExit:
                 pass
-            except todo_api.TaskNotFoundByName as e:
+            except TaskNotFoundByName as e:
                 eprint(e.message)
-            except todo_api.ListNotFound as e:
+            except ListNotFound as e:
                 eprint(e.message)
-            except todo_api.TaskNotFoundByIndex as e:
+            except TaskNotFoundByIndex as e:
                 eprint(e.message)
             except InvalidTaskPath as e:
                 eprint(e.message)
