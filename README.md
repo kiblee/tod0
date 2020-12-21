@@ -47,6 +47,9 @@ For the UI client, run `tod0` from anywhere on your terminal.
 For the CLI client, run `todocli` from anywhere on your terminal.
 Usage:
 
+    NAME
+        todocli - Command line client for Microsoft ToDo 
+        
     SYNOPSIS
         todocli [options] COMMAND ...  
         
@@ -101,20 +104,31 @@ Usage:
             Max: 99h
             
         morning
-            Tomorrow morning at 07:00 AM
+            Today at 07:00 AM if current time < 07:00 AM, otherwise tomorrow
+
+        tomorrow
+            Tomorrow at 07:00 AM
             
         evening
-            Today at 06:00 PM if current time < 06:00 PM, otherwise tomorrow at 06:00 PM
+            Today at 06:00 PM if current time < 06:00 PM, otherwise tomorrow
             
         {hour}:{minute}
-            Today at {hour}:{minute}
+            Today at {hour}:{minute} if current time < {hour}:{minute}, otherwise tomorrow 
             e.g. 9:30, 09:30, 17:15
+            
+        {hour}:{minute} am|pm 
+            Today at {hour}:{minute} am|pm  if current time < {hour}:{minute} am|pm, otherwise tomorrow
+            e.g. 9:30 am, 12:00 am, 10:15 pm
             
         {day}.{month}. {hour}:{minute}
             The given day at {hour}:{minute}
             e.g. 24.12. 12:00
             e.g. 7.4.   9:15
-            
+        
+        {day}.{month}.{year}
+            The given day at 7:00 am
+            e.g. 22.12.2020
+            e.g. 01.01.21
     
 Features
 --------
