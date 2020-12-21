@@ -128,18 +128,18 @@ def parse_datetime(datetime_str: str):
                 day=day, month=month, hour=hour, minute=minute, second=0, microsecond=0
             )
 
-        if re.match(
-            r"([0-9]{1,2}/[0-9]{1,2} [0-9]{1,2}:[0-9]{2} (am|pm))",
-            datetime_str,
-            re.IGNORECASE,
-        ):
-            """ e.g. 17/01 5:00 pm """
-            split_str = datetime_str.split(" ")
-            day, month = parse_day_month_MM_DD(split_str[0])
-            hour, minute = parse_hour_minute(split_str[1])
-            return datetime.now().replace(
-                day=day, month=month, hour=hour, minute=minute, second=0, microsecond=0
-            )
+        # if re.match(
+        #     r"([0-9]{1,2}/[0-9]{1,2} [0-9]{1,2}:[0-9]{2} (am|pm))",
+        #     datetime_str,
+        #     re.IGNORECASE,
+        # ):
+        #     """ e.g. 01/17 5:00 pm """
+        #     split_str = datetime_str.split(" ")
+        #     day, month = parse_day_month_MM_DD(split_str[0])
+        #     hour, minute = parse_hour_minute(split_str[1])
+        #     return datetime.now().replace(
+        #         day=day, month=month, hour=hour, minute=minute, second=0, microsecond=0
+        #     )
 
     except ValueError as e:
         raise ErrorParsingTime(str(e))
