@@ -124,7 +124,11 @@ Usage:
             The given day at {hour}:{minute}
             e.g. 24.12. 12:00
             e.g. 7.4.   9:15
-            
+        
+        {day}.{month}.{year}
+            The given day at 7:00 am
+            e.g. 22.12.2020
+            e.g. 01.01.21
     
 Features
 --------
