@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from todocli.todo_api_util import api_timestamp_to_datetime
+from todocli.todo_api.todo_api_util import api_timestamp_to_datetime
 
 
 class Task:
