@@ -22,16 +22,18 @@ def parse_day_month_MM_DD(input_str):
     day = int(split_str[1])
     return day, month
 
+
 def parse_day_month_DD_MM_YYorYYYY(input_str):
     split_str = input_str.split(".")
     day = int(split_str[0])
     month = int(split_str[1])
     year = split_str[2]
     if len(year) == 2:
-        year = int("20"+year)
+        year = int("20" + year)
     else:
         year = int(year)
-    return day,month,year
+    return day, month, year
+
 
 def add_day_if_past(dt: datetime) -> datetime:
     """This function will add a day to the datetime object 'dt' when 'dt' is in the past"""
@@ -112,7 +114,13 @@ def parse_datetime(datetime_str: str):
             """ e.g. 17.01.20 or 22.12.2020 """
             day, month, year = parse_day_month_DD_MM_YYorYYYY(datetime_str)
             return datetime.now().replace(
-                year=year, day=day, month=month, hour=7, minute=0, second=0, microsecond=0
+                year=year,
+                day=day,
+                month=month,
+                hour=7,
+                minute=0,
+                second=0,
+                microsecond=0,
             )
 
         if re.match(
