@@ -2,6 +2,8 @@ import argparse
 import shlex
 import sys
 
+from todocli.task import Task
+from todocli.todolist import TodoList
 import todocli.todo_api as todo_api
 from todocli.datetime_parser import (
     parse_datetime,
