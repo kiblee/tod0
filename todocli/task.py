@@ -20,9 +20,7 @@ class Task:
     def __init__(self, query_result):
         self.title = query_result["title"]
         self.id = query_result["id"]
-        self.importance = Task.Importance(
-            query_result["importance"]
-        )
+        self.importance = Task.Importance(query_result["importance"])
         self.status = Task.Status(query_result["status"])
         self.created_datetime = api_timestamp_to_datetime(
             query_result["createdDateTime"]
