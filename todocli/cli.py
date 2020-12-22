@@ -2,8 +2,6 @@ import argparse
 import shlex
 import sys
 
-from todocli.task import Task
-from todocli.todolist import TodoList
 import todocli.todo_api as todo_api
 from todocli.datetime_parser import (
     parse_datetime,
@@ -129,13 +127,13 @@ def print_list(item_list, print_line_nums):
 
 
 def ls(args):
-    lists = [TodoList(x) for x in todo_api.query_lists()]
+    lists = todo_api.query_lists()
     lists_names = [l.display_name for l in lists]
     print_list(lists_names, args.display_linenums)
 
 
 def lst(args):
-    tasks = [Task(x) for x in todo_api.query_tasks(args.list_name)]
+    tasks = todo_api.query_tasks(args.list_name)
     tasks_titles = [x.title for x in tasks]
     print_list(tasks_titles, args.display_linenums)
 
