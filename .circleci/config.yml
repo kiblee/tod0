@@ -15,7 +15,7 @@ jobs:
       - run:
           command: |
             pip install -e .
-            python3 todocli/test/test_datetime_parser.py
+            python3 tests/test_datetime_parser.py
           name: run_tests
 
   python_lint:
