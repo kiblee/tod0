@@ -14,7 +14,8 @@ jobs:
       - python/save-cache
       - run:
           command: |
-            echo "tests will be done here"
+            pip install -e .
+            python3 tests/test_datetime_parser.py
           name: run_tests
 
   python_lint:
