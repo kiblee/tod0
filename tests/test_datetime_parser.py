@@ -13,7 +13,7 @@ from todocli.datetime_parser import (
 
 
 class TestDatetimeParser(unittest.TestCase):
-    @patch.object(todocli.datetime_parser, 'datetime', Mock(wraps=datetime))
+    @patch.object(todocli.datetime_parser, "datetime", Mock(wraps=datetime))
     def test_add_day_if_datetime_is_in_past(self):
         dt_now = datetime(2020, 1, 1, 9, 0)
         todocli.datetime_parser.datetime.now.return_value = dt_now
@@ -46,7 +46,7 @@ class TestDatetimeParser(unittest.TestCase):
         dt_expected = add_day_if_past(dt_expected)
         self.assertEqual(dt, dt_expected)
 
-    @patch.object(todocli.datetime_parser, 'datetime', Mock(wraps=datetime))
+    @patch.object(todocli.datetime_parser, "datetime", Mock(wraps=datetime))
     def test_time_strings(self):
         # (user input, simulated 'now' time, expected output)
         times = [
@@ -79,7 +79,7 @@ class TestDatetimeParser(unittest.TestCase):
             # "4/4 12:00 pm",
             ("morning", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 7, 0)),
             ("evening", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 1, 18, 0)),
-            ("tomorrow", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 7, 0))
+            ("tomorrow", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 7, 0)),
         ]
 
         for user_input, simulated_now_time, expected_output in times:
