@@ -1,4 +1,7 @@
 import unittest
+import todocli
+
+from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
 
 from todocli.datetime_parser import (
@@ -10,56 +13,60 @@ from todocli.datetime_parser import (
 
 
 class TestDatetimeParser(unittest.TestCase):
+    @patch.object(todocli.datetime_parser, "datetime", Mock(wraps=datetime))
     def test_add_day_if_datetime_is_in_past(self):
-        dt_now = datetime.now()
+        dt_now = datetime(2020, 1, 1, 9, 0)
+        todocli.datetime_parser.datetime.now.return_value = dt_now
         dt = dt_now - timedelta(minutes=1)
         dt = add_day_if_past(dt)
-        assert dt.day > dt_now.day
+        self.assertGreater(dt.day, dt_now.day)
 
         dt = dt_now + timedelta(hours=1)
         dt = add_day_if_past(dt)
-        assert dt.day == dt_now.day
+        self.assertEqual(dt.day, dt_now.day)
 
     def test_am_pm_time1(self):
         input_str = "07:00 pm"
         dt = parse_datetime(input_str)
         dt_expected = datetime.now().replace(hour=19, minute=0, second=0, microsecond=0)
         dt_expected = add_day_if_past(dt_expected)
-        assert dt == dt_expected
+        self.assertEqual(dt, dt_expected)
 
     def test_am_pm_time2(self):
         input_str = "7:00 pm"
         dt = parse_datetime(input_str)
         dt_expected = datetime.now().replace(hour=19, minute=0, second=0, microsecond=0)
         dt_expected = add_day_if_past(dt_expected)
-        assert dt == dt_expected
+        self.assertEqual(dt, dt_expected)
 
     def test_am_pm_time3(self):
         input_str = "12:00 am"
         dt = parse_datetime(input_str)
         dt_expected = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         dt_expected = add_day_if_past(dt_expected)
-        assert dt == dt_expected
+        self.assertEqual(dt, dt_expected)
 
+    @patch.object(todocli.datetime_parser, "datetime", Mock(wraps=datetime))
     def test_time_strings(self):
+        # (user input, simulated 'now' time, expected output)
         times = [
-            "07:00",
-            "7:00",
-            "0:00",
-            "17:30",
-            "6:30 am",
-            "6:30 pm",
-            "06:30 am",
-            "06:30 pm",
-            "00:00 am",
-            "12:00 am",
-            "24.06. 12:00",
-            "24.06. 6:00",
-            "24.6. 6:00",
-            "24.6. 06:00",
-            "24.6. 12:00",
-            "6.6. 06:06",
-            "6.6. 6:06",
+            ("07:00", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 7, 0)),
+            ("7:00", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 7, 0)),
+            ("0:00", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 0, 0)),
+            ("17:30", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 1, 17, 30)),
+            ("6:30 am", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 6, 30)),
+            ("6:30 pm", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 1, 18, 30)),
+            ("06:30 am", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 6, 30)),
+            ("06:30 pm", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 1, 18, 30)),
+            ("00:00 am", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 0, 0)),
+            ("12:00 am", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 0, 0)),
+            ("24.06. 12:00", datetime(2020, 6, 24, 9, 0), datetime(2020, 6, 24, 12, 0)),
+            ("24.06. 6:00", datetime(2020, 6, 23, 9, 0), datetime(2020, 6, 24, 6, 0)),
+            ("24.6. 6:00", datetime(2020, 6, 23, 9, 0), datetime(2020, 6, 24, 6, 0)),
+            ("24.6. 06:00", datetime(2020, 6, 23, 9, 0), datetime(2020, 6, 24, 6, 0)),
+            ("24.6. 12:00", datetime(2020, 6, 24, 9, 0), datetime(2020, 6, 24, 12, 0)),
+            ("6.6. 06:06", datetime(2020, 6, 5, 9, 0), datetime(2020, 6, 6, 6, 6)),
+            ("6.6. 6:06", datetime(2020, 6, 5, 9, 0), datetime(2020, 6, 6, 6, 6)),
             # "04/27 12:00 am",
             # "04/27 2:00 am",
             # "04/27 3:00 pm",
@@ -70,14 +77,16 @@ class TestDatetimeParser(unittest.TestCase):
             # "4/4 9:00 pm",
             # "4/4 09:00 pm",
             # "4/4 12:00 pm",
-            "morning",
-            "evening",
-            "tomorrow",
+            ("morning", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 7, 0)),
+            ("evening", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 1, 18, 0)),
+            ("tomorrow", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 7, 0)),
         ]
 
-        for time in times:
-            print(f"testing time: {time}")
-            parse_datetime(time)
+        for user_input, simulated_now_time, expected_output in times:
+            print(f"testing time: {user_input}")
+            todocli.datetime_parser.datetime.now.return_value = simulated_now_time
+            return_val = parse_datetime(user_input)
+            self.assertEqual(return_val, expected_output)
 
     def test_invalid_time(self):
         invalid_times = [
