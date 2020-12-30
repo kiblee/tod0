@@ -3,8 +3,9 @@ For implementation details, refer to this source:
 https://docs.microsoft.com/en-us/graph/api/resources/todo-overview?view=graph-rest-1.0
 """
 from datetime import datetime
-from enum import Enum
 from typing import Union
+
+from todocli.todolist import TodoList
 
 from todocli import api_urls
 from todocli.rest_request import (
@@ -14,6 +15,7 @@ from todocli.rest_request import (
     RestRequestDelete,
     RestRequestWithBody,
 )
+from todocli.task import Task
 from todocli.todo_api_util import datetime_to_api_timestamp
 
 list_ids_cached = {}
@@ -42,29 +44,17 @@ class TaskNotFoundByIndex(Exception):
 
 
 class _RestRequestTask:
-    class Status(Enum):
-        Completed = "completed"
-        NotStarted = "notStarted"
-        InProgress = "inProgress"
-        WaitingOnOthers = "waitingOnOthers"
-        Deferred = "deferred"
-
-    class Importance(Enum):
-        Low = "low"
-        Normal = "normal"
-        High = ""
-
     def __init__(self):
         self.request = None
 
     def set_completed(self):
         self.request["completedDateTime"] = datetime_to_api_timestamp(datetime.now())
-        self.set_status(self.Status.Completed)
+        self.set_status(Task.Status.Completed)
 
-    def set_status(self, status: Status):
+    def set_status(self, status: Task.Status):
         self.request["status"] = status.value
 
-    def set_importance(self, importance: Importance):
+    def set_importance(self, importance: Task.Importance):
         self.request["importance"] = importance.value
 
     def set_title(self, title: str):
@@ -102,10 +92,10 @@ class RestRequestTaskNew(_RestRequestTask):
 
 def query_list_id_by_name(list_name):
     url = api_urls.query_list_id_by_name(list_name)
-    res = RestRequestGet(url).execute()
+    result = RestRequestGet(url).execute()
 
     try:
-        return res[0]["id"]
+        return result[0]["id"]
     except IndexError:
         raise ListNotFound(list_name)
 
@@ -123,12 +113,14 @@ def query_tasks(list_name: str, num_tasks: int = 100):
     query_url = api_urls.query_completed_tasks(
         get_list_id_by_name(list_name), num_tasks
     )
-    return RestRequestGet(query_url).execute()
+    result = RestRequestGet(query_url).execute()
+    return [Task(x) for x in result]
 
 
 def query_task(list_name: str, task_name: str):
     query_url = api_urls.query_task_by_name(get_list_id_by_name(list_name), task_name)
-    return RestRequestGet(query_url).execute()
+    result = RestRequestGet(query_url).execute()
+    return [Task(x) for x in result]
 
 
 def create_list(title: str):
@@ -155,13 +147,13 @@ def create_task(task_name: str, list_name: str, reminder_datetime: datetime = No
 
 
 def query_lists():
-    lists = RestRequestGet(api_urls.all_lists()).execute()
-    return lists
+    result = RestRequestGet(api_urls.all_lists()).execute()
+    return [TodoList(x) for x in result]
 
 
 def get_task_id_by_name(list_name: str, task_name: str):
     try:
-        return query_task(list_name, task_name)[0]["id"]
+        return query_task(list_name, task_name)[0].id
     except IndexError:
         raise TaskNotFoundByName(task_name, list_name)
 
@@ -169,7 +161,7 @@ def get_task_id_by_name(list_name: str, task_name: str):
 def get_task_id_by_list_position(list_name: str, task_list_position):
     tasks = query_tasks(list_name, task_list_position + 1)
     try:
-        return tasks[task_list_position]["id"]
+        return tasks[task_list_position].id
     except IndexError:
         raise TaskNotFoundByIndex(task_list_position, list_name)
 
