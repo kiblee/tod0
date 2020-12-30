@@ -52,7 +52,7 @@ def print_list(item_list, print_line_nums):
 
 def ls(args):
     lists = todo_api.GetLists().execute()
-    lists_names = [task_list.display_name for task_list in lists]
+    lists_names = [l.display_name for l in lists]
     print_list(lists_names, args.display_linenums)
 
 
@@ -68,13 +68,13 @@ def new(args):
 
     reminder_date_time_str = args.reminder
 
-    taskRequest = todo_api.CreateTask(task_list, name)
+    request = todo_api.CreateTask(task_list, name)
 
     if reminder_date_time_str is not None:
         reminder_datetime = parse_datetime(reminder_date_time_str)
-        taskRequest.set_reminder(reminder_datetime)
+        request.set_reminder(reminder_datetime)
 
-    taskRequest.execute()
+    request.execute()
 
 
 def newl(args):
