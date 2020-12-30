@@ -23,6 +23,7 @@ from todocli.todo_api.queries import (
 )
 from todocli.task import Task
 from todocli.todo_api.todo_api_util import datetime_to_api_timestamp
+from todocli.todolist import TodoList
 
 
 class _RestRequestTask:
@@ -126,7 +127,7 @@ class GetList:
 class GetLists:
     def execute(self):
         result = query_lists()
-        return result
+        return [TodoList(list_) for list_ in result]
 
 
 class CreateList(_RestRequestList):
