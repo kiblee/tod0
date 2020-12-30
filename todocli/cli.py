@@ -2,7 +2,11 @@ import argparse
 import shlex
 import sys
 
-from todocli.datetime_parser import parse_datetime, TimeExpressionNotRecognized, ErrorParsingTime
+from todocli.datetime_parser import (
+    parse_datetime,
+    TimeExpressionNotRecognized,
+    ErrorParsingTime,
+)
 from todocli.error import eprint
 from todocli.task import Task
 from todocli.todolist import TodoList

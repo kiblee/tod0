@@ -3,7 +3,11 @@ from typing import Union
 
 from todocli.rest_request import RestRequestGet
 from todocli.todo_api import api_urls
-from todocli.todo_api.exceptions import TaskNotFoundByName, TaskNotFoundByIndex, ListNotFound
+from todocli.todo_api.exceptions import (
+    TaskNotFoundByName,
+    TaskNotFoundByIndex,
+    ListNotFound,
+)
 
 list_ids_cached = {}
 
