@@ -1,6 +1,4 @@
-from datetime import datetime
 from enum import Enum
-
 from todocli.utils.datetime_util import api_timestamp_to_datetime
 
 

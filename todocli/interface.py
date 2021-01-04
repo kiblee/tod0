@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from prompt_toolkit.application import Application
-from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.key_binding import (
     KeyBindings,
     ConditionalKeyBindings,
@@ -14,7 +13,7 @@ from prompt_toolkit.layout.containers import (
     WindowAlign,
     DynamicContainer,
 )
-from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.widgets import TextArea
 
