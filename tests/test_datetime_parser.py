@@ -4,7 +4,7 @@ import todocli
 from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
 
-from todocli.datetime_parser import (
+from todocli.utils.datetime_util import (
     parse_datetime,
     add_day_if_past,
     ErrorParsingTime,
@@ -13,10 +13,10 @@ from todocli.datetime_parser import (
 
 
 class TestDatetimeParser(unittest.TestCase):
-    @patch.object(todocli.datetime_parser, "datetime", Mock(wraps=datetime))
+    @patch.object(todocli.utils.datetime_util, "datetime", Mock(wraps=datetime))
     def test_add_day_if_datetime_is_in_past(self):
         dt_now = datetime(2020, 1, 1, 9, 0)
-        todocli.datetime_parser.datetime.now.return_value = dt_now
+        todocli.utils.datetime_util.datetime.now.return_value = dt_now
         dt = dt_now - timedelta(minutes=1)
         dt = add_day_if_past(dt)
         self.assertGreater(dt.day, dt_now.day)
@@ -46,7 +46,7 @@ class TestDatetimeParser(unittest.TestCase):
         dt_expected = add_day_if_past(dt_expected)
         self.assertEqual(dt, dt_expected)
 
-    @patch.object(todocli.datetime_parser, "datetime", Mock(wraps=datetime))
+    @patch.object(todocli.utils.datetime_util, "datetime", Mock(wraps=datetime))
     def test_time_strings(self):
         # (user input, simulated 'now' time, expected output)
         times = [
@@ -84,7 +84,7 @@ class TestDatetimeParser(unittest.TestCase):
 
         for user_input, simulated_now_time, expected_output in times:
             print(f"testing time: {user_input}")
-            todocli.datetime_parser.datetime.now.return_value = simulated_now_time
+            todocli.utils.datetime_util.datetime.now.return_value = simulated_now_time
             return_val = parse_datetime(user_input)
             self.assertEqual(return_val, expected_output)
 
