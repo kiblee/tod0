@@ -8,7 +8,7 @@ from todocli.utils.datetime_util import (
     TimeExpressionNotRecognized,
     ErrorParsingTime,
 )
-from todocli.error import error, eprint
+from todocli.error import eprint
 from todocli.help_msg import help_msg
 
 
@@ -101,14 +101,14 @@ class ArgumentParser(argparse.ArgumentParser):
 
 
 helptext_task_name = """
-        Specify the task to complete. 
+        Specify the task to complete.
         Can be one of the following:
-        task_name 
-        list_name/task_name 
+        task_name
+        list_name/task_name
         task_number
         list_name/task_number
 
-        'task_number' is the number displayed when providing the argument '-n'  
+        'task_number' is the number displayed when providing the argument '-n'
         """
 
 
