@@ -16,7 +16,7 @@ from todocli.rest_request import (
     RestRequestWithBody,
 )
 from todocli.task import Task
-from todocli.todo_api_util import datetime_to_api_timestamp
+from todocli.utils.datetime_util import datetime_to_api_timestamp
 
 list_ids_cached = {}
 

@@ -3,7 +3,7 @@ import shlex
 import sys
 
 import todocli.todo_api as todo_api
-from todocli.datetime_parser import (
+from todocli.utils.datetime_util import (
     parse_datetime,
     TimeExpressionNotRecognized,
     ErrorParsingTime,
