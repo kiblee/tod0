@@ -23,14 +23,11 @@ def list_tasks(all_=False, folder=""):
             )
     else:
         if all_:
-            o = outlook.get(
-                "{}/lists/{}/tasks?top=100".format(base_api_url, folder)
-            )
+            o = outlook.get("{}/lists/{}/tasks?top=100".format(base_api_url, folder))
         else:
             o = outlook.get(
                 "{}/lists/{}/tasks?$filter=status ne 'completed'&top=100".format(
-                    base_api_url, folder
-                )
+                    base_api_url, folder)
             )
 
     return parse_contents(o)
@@ -87,7 +84,9 @@ def create_task(text, folder=None):
     if folder is None:
         o = outlook.post("{}/tasks".format(base_api_url), json=request_body)
     else:
-        o = outlook.post("{}/lists/{}/tasks".format(base_api_url, folder), json=request_body)
+        o = outlook.post(
+            "{}/lists/{}/tasks".format(base_api_url, folder), json=request_body
+        )
 
     return o.ok
 
@@ -103,6 +102,5 @@ def complete_task(list_id, task_id):
     outlook = get_oauth_session()
 
     o = outlook.patch(
-        "{}/lists/{}/tasks/{}/".format(base_api_url, list_id, task_id), json={"status": "completed"}
-    )
+        "{}/lists/{}/tasks/{}/".format(base_api_url, list_id, task_id), json={"status": "completed"})
     return o.ok
