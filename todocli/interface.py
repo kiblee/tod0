@@ -27,15 +27,8 @@ focus_index_folder = 0
 focus_index_task = 0
 focus_folder = True
 
-# Confirmation stuff
+# This flag is used to direct user input to confirmation prompt
 waiting_for_confirmation = False
-
-
-@Condition
-def is_not_waiting_for_confirmation():
-    "Enable key bindings when not waiting for confirmation"
-    return not waiting_for_confirmation
-
 
 # Global data structures to hold info
 folder2id = {}
@@ -127,6 +120,28 @@ def _(event):
     Pressing Ctrl-Q or Ctrl-C will exit the user interface.
     """
     event.app.exit()
+
+
+@kb.add("?")
+def _(event):
+    """
+    Pressing Shift-? will display help toolbar.
+    """
+    global waiting_for_confirmation
+    global prompt_window
+
+    waiting_for_confirmation = True
+
+    input_field = TextArea(
+        height=1,
+        prompt="[UP: j] [DOWN: k] [SELECT: l] [BACK: h] [CREATE: n] [MARK COMPLETE: c] [EXIT HELP: ESC]",
+        style="class:output-field",
+        multiline=False,
+        wrap_lines=False,
+    )
+
+    prompt_window = input_field
+    event.app.layout.focus(input_field)
 
 
 @kb.add("j")
@@ -317,6 +332,12 @@ def _(event):
     # Return to normal state
     waiting_for_confirmation = False
     prompt_window = Window()
+
+
+@Condition
+def is_not_waiting_for_confirmation():
+    "Enable key bindings when not waiting for confirmation"
+    return not waiting_for_confirmation
 
 
 kb = ConditionalKeyBindings(kb, is_not_waiting_for_confirmation)

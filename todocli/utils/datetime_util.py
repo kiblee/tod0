@@ -62,7 +62,7 @@ def add_day_if_past(dt: datetime) -> datetime:
 def parse_datetime(datetime_str: str):
     try:
         if re.match(r"([0-9]{1,2}h)", datetime_str, re.IGNORECASE):
-            """e.g. 1h / 12h """
+            """e.g. 1h / 12h"""
             return datetime.now() + timedelta(hours=int(datetime_str[:-1]))
 
         if datetime_str == "morning":
@@ -84,7 +84,7 @@ def parse_datetime(datetime_str: str):
             )
 
         if re.match(r"([0-9]{1,2}:[0-9]{2} (am|pm))", datetime_str, re.IGNORECASE):
-            """e.g. 5:30 pm """
+            """e.g. 5:30 pm"""
             split_str = datetime_str.split(" ")
             hour, minute = parse_hour_minute(split_str[0])
 
@@ -101,7 +101,7 @@ def parse_datetime(datetime_str: str):
             )
 
         if re.match(r"([0-9]{1,2}:[0-9]{2})", datetime_str, re.IGNORECASE):
-            """e.g. 17:00 """
+            """e.g. 17:00"""
             hour, minute = parse_hour_minute(datetime_str)
             return add_day_if_past(
                 datetime.now().replace(
@@ -114,7 +114,7 @@ def parse_datetime(datetime_str: str):
             datetime_str,
             re.IGNORECASE,
         ):
-            """ e.g. 17.01.20 or 22.12.2020 """
+            """e.g. 17.01.20 or 22.12.2020"""
             day, month, year = parse_day_month_DD_MM_YYorYYYY(datetime_str)
             return datetime.now().replace(
                 year=year,
@@ -131,7 +131,7 @@ def parse_datetime(datetime_str: str):
             datetime_str,
             re.IGNORECASE,
         ):
-            """e.g. 17.01. 17:00 """
+            """e.g. 17.01. 17:00"""
             split_str = datetime_str.split(" ")
             day, month = parse_day_month_DD_MM(split_str[0])
             hour, minute = parse_hour_minute(split_str[1])

@@ -27,7 +27,8 @@ def list_tasks(all_=False, folder=""):
         else:
             o = outlook.get(
                 "{}/lists/{}/tasks?$filter=status ne 'completed'&top=100".format(
-                    base_api_url, folder)
+                    base_api_url, folder
+                )
             )
 
     return parse_contents(o)
@@ -102,5 +103,7 @@ def complete_task(list_id, task_id):
     outlook = get_oauth_session()
 
     o = outlook.patch(
-        "{}/lists/{}/tasks/{}/".format(base_api_url, list_id, task_id), json={"status": "completed"})
+        "{}/lists/{}/tasks/{}/".format(base_api_url, list_id, task_id),
+        json={"status": "completed"},
+    )
     return o.ok

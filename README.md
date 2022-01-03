@@ -43,6 +43,8 @@ For the UI client, run `tod0` from anywhere on your terminal.
     
     n       Create task/folder
     c       Mark task as complete
+
+    ?       Display help
     
 For the CLI client, run `todocli` from anywhere on your terminal.
 Usage:
