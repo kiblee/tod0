@@ -62,7 +62,7 @@ def load_folders():
     folder_data = auth.list_and_update_folders()
     for idx, f in enumerate(folder_data):
         folder2id[idx] = f["id"]
-        folders.append(f["name"])
+        folders.append(f["displayName"])
 
     # Layout interface
     left_window.children = [
@@ -223,7 +223,7 @@ def _(event):
         user_input = input_field.text
         if user_input == "y":
             # Mark task as complete
-            auth.complete_task(task2id[focus_index_task])
+            auth.complete_task(folder2id[focus_index_folder], task2id[focus_index_task])
             load_tasks()
 
         # Return to normal state
@@ -289,6 +289,7 @@ def _(event):
             global waiting_for_confirmation
             global prompt_window
             user_input = input_field.text
+
             if user_input:
                 # Create new task
                 auth.create_task(user_input, folder2id[focus_index_folder])
@@ -336,10 +337,8 @@ def load_tasks():
     tasks = []
     for idx, t in enumerate(task_data):
         id_ = t["id"]
-        subject = t["subject"]
-        status = t["status"]
-        folder_id = t["parentFolderId"]
-        tasks.append(Window(FormattedTextControl(subject), height=1))
+        title = t["title"]
+        tasks.append(Window(FormattedTextControl(title), height=1))
         task2id[idx] = id_
 
     # Add empty container if task list is empty

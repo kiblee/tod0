@@ -125,7 +125,7 @@ def query_task(list_name: str, task_name: str):
 
 def create_list(title: str):
     request = RestRequestPost(api_urls.new_list())
-    request["title"] = title
+    request["displayName"] = title
     return request.execute()
 
 
