@@ -156,13 +156,17 @@ def _(event):
         global global_focus_index_folder
         folder_window = left_window.children
         folder_window[global_focus_index_folder].style = ""
-        global_focus_index_folder = (global_focus_index_folder + 1) % len(global_folders)
+        global_focus_index_folder = (global_focus_index_folder + 1) % len(
+            global_folders
+        )
         folder_window[global_focus_index_folder].style = COLOR_FOLDER
     else:
         global global_focus_index_task
         if global_tasks_ui:
             global_tasks_ui[global_focus_index_task].style = ""
-            global_focus_index_task = (global_focus_index_task + 1) % len(global_tasks_ui)
+            global_focus_index_task = (global_focus_index_task + 1) % len(
+                global_tasks_ui
+            )
             global_tasks_ui[global_focus_index_task].style = COLOR_TASK
 
 
@@ -176,13 +180,17 @@ def _(event):
         global global_focus_index_folder
         folder_window = left_window.children
         folder_window[global_focus_index_folder].style = ""
-        global_focus_index_folder = (global_focus_index_folder - 1) % len(global_folders)
+        global_focus_index_folder = (global_focus_index_folder - 1) % len(
+            global_folders
+        )
         folder_window[global_focus_index_folder].style = COLOR_FOLDER
     else:
         global global_focus_index_task
         if global_tasks_ui:
             global_tasks_ui[global_focus_index_task].style = ""
-            global_focus_index_task = (global_focus_index_task - 1) % len(global_tasks_ui)
+            global_focus_index_task = (global_focus_index_task - 1) % len(
+                global_tasks_ui
+            )
             global_tasks_ui[global_focus_index_task].style = COLOR_TASK
 
 
@@ -241,7 +249,10 @@ def _(event):
         user_input = input_field.text
         if user_input == "y":
             # Mark task as complete
-            todo_api.complete_task(global_folders[global_focus_index_folder], global_tasks[global_focus_index_task].title)
+            todo_api.complete_task(
+                global_folders[global_focus_index_folder],
+                global_tasks[global_focus_index_task].title,
+            )
             load_tasks()
 
         # Return to normal state
@@ -310,7 +321,9 @@ def _(event):
 
             if user_input:
                 # Create new task
-                todo_api.create_task(user_input, global_folders[global_focus_index_folder])
+                todo_api.create_task(
+                    user_input, global_folders[global_focus_index_folder]
+                )
                 # Refresh tasks
                 load_tasks()
 
