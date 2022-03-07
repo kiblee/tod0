@@ -2,7 +2,7 @@ import argparse
 import shlex
 import sys
 
-import todocli.todo_api as todo_api
+import todocli.graphapi.todo_api as todo_api
 from todocli.utils.datetime_util import (
     parse_datetime,
     TimeExpressionNotRecognized,

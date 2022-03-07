@@ -2,14 +2,18 @@
 For implementation details, refer to this source:
 https://docs.microsoft.com/en-us/graph/api/resources/todo-overview?view=graph-rest-1.0
 """
+import os
+import pickle
+
 from datetime import datetime
 from typing import Union
 
 from todocli.models.todolist import TodoList
 from todocli.models.task import Task
 
-from todocli import api_urls
-from todocli.rest_request import (
+from todocli.graphapi import api_urls
+from todocli.graphapi.oauth import config_dir
+from todocli.graphapi.rest_request import (
     RestRequestGet,
     RestRequestPost,
     RestRequestPatch,
@@ -148,7 +152,8 @@ def create_task(task_name: str, list_name: str, reminder_datetime: datetime = No
 
 def query_lists():
     result = RestRequestGet(api_urls.all_lists()).execute()
-    return [TodoList(x) for x in result]
+    lists = [TodoList(x) for x in result]
+    return lists
 
 
 def get_task_id_by_name(list_name: str, task_name: str):

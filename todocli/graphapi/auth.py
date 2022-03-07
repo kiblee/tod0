@@ -2,7 +2,7 @@ import json
 import os
 import pickle
 
-from todocli.oauth import get_oauth_session, config_dir
+from todocli.graphapi.oauth import get_oauth_session, config_dir
 
 base_api_url = "https://graph.microsoft.com/v1.0/me/todo"
 

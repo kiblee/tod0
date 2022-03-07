@@ -126,3 +126,4 @@ dmypy.json
 
 keys.yml
 token.pkl
+*.DS_Store

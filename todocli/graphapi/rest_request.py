@@ -1,6 +1,6 @@
 import json
 
-from todocli.oauth import get_oauth_session
+from todocli.graphapi.oauth import get_oauth_session
 
 
 class RestRequest:

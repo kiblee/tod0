@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from asyncio import tasks
 from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import (
     KeyBindings,
@@ -17,24 +18,25 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.widgets import TextArea
 
-from todocli import auth
+import todocli.graphapi.todo_api as todo_api
 
 # Colors
-color_folder = "bg:#006699"
-color_task = "bg:#006699"
+COLOR_FOLDER = "bg:#006699"
+COLOR_TASK = "bg:#006699"
 
-focus_index_folder = 0
-focus_index_task = 0
-focus_folder = True
+global_focus_index_folder = 0
+global_focus_index_task = 0
+global_focus_on_folder = True
 
 # This flag is used to direct user input to confirmation prompt
-waiting_for_confirmation = False
+global_waiting_confirmation = False
 
-# Global data structures to hold info
-folder2id = {}
-folders = []
-task2id = {}
-tasks = []
+# Global data structures for ui
+global_folder2id = {}
+global_folders = []
+global_task2id = {}
+global_tasks_ui = []
+global_tasks = []
 
 
 def load_folders():
@@ -42,28 +44,28 @@ def load_folders():
     Load all folders
     """
     global left_window
-    global focus_index_folder
-    global folder2id
-    global folders
+    global global_focus_index_folder
+    global global_folder2id
+    global global_folders
 
     # Reset all folder data structures
-    focus_index_folder = 0
-    folder2id.clear()
-    folders.clear()
+    global_focus_index_folder = 0
+    global_folder2id.clear()
+    global_folders.clear()
 
     # Retrieve folder data
-    folder_data = auth.list_and_update_folders()
-    for idx, f in enumerate(folder_data):
-        folder2id[idx] = f["id"]
-        folders.append(f["displayName"])
+    lists = todo_api.query_lists()
+    for idx, _list in enumerate(lists):
+        global_folder2id[idx] = _list.id
+        global_folders.append(_list.display_name)
 
     # Layout interface
     left_window.children = [
-        Window(FormattedTextControl(f), height=1, width=50) for f in folders
+        Window(FormattedTextControl(f), height=1, width=50) for f in global_folders
     ]
 
     # Highlight first folder
-    left_window.children[0].style = color_folder
+    left_window.children[0].style = COLOR_FOLDER
 
 
 left_window = HSplit([Window()])
@@ -127,10 +129,10 @@ def _(event):
     """
     Pressing Shift-? will display help toolbar.
     """
-    global waiting_for_confirmation
+    global global_waiting_confirmation
     global prompt_window
 
-    waiting_for_confirmation = True
+    global_waiting_confirmation = True
 
     input_field = TextArea(
         height=1,
@@ -150,18 +152,18 @@ def _(event):
     Move selection down 1
     """
 
-    if focus_folder:
-        global focus_index_folder
+    if global_focus_on_folder:
+        global global_focus_index_folder
         folder_window = left_window.children
-        folder_window[focus_index_folder].style = ""
-        focus_index_folder = (focus_index_folder + 1) % len(folders)
-        folder_window[focus_index_folder].style = color_folder
+        folder_window[global_focus_index_folder].style = ""
+        global_focus_index_folder = (global_focus_index_folder + 1) % len(global_folders)
+        folder_window[global_focus_index_folder].style = COLOR_FOLDER
     else:
-        global focus_index_task
-        if tasks:
-            tasks[focus_index_task].style = ""
-            focus_index_task = (focus_index_task + 1) % len(tasks)
-            tasks[focus_index_task].style = color_task
+        global global_focus_index_task
+        if global_tasks_ui:
+            global_tasks_ui[global_focus_index_task].style = ""
+            global_focus_index_task = (global_focus_index_task + 1) % len(global_tasks_ui)
+            global_tasks_ui[global_focus_index_task].style = COLOR_TASK
 
 
 @kb.add("k")
@@ -170,18 +172,18 @@ def _(event):
     Move selection up 1
     """
 
-    if focus_folder:
-        global focus_index_folder
+    if global_focus_on_folder:
+        global global_focus_index_folder
         folder_window = left_window.children
-        folder_window[focus_index_folder].style = ""
-        focus_index_folder = (focus_index_folder - 1) % len(folders)
-        folder_window[focus_index_folder].style = color_folder
+        folder_window[global_focus_index_folder].style = ""
+        global_focus_index_folder = (global_focus_index_folder - 1) % len(global_folders)
+        folder_window[global_focus_index_folder].style = COLOR_FOLDER
     else:
-        global focus_index_task
-        if tasks:
-            tasks[focus_index_task].style = ""
-            focus_index_task = (focus_index_task - 1) % len(tasks)
-            tasks[focus_index_task].style = color_task
+        global global_focus_index_task
+        if global_tasks_ui:
+            global_tasks_ui[global_focus_index_task].style = ""
+            global_focus_index_task = (global_focus_index_task - 1) % len(global_tasks_ui)
+            global_tasks_ui[global_focus_index_task].style = COLOR_TASK
 
 
 @kb.add("l")
@@ -189,7 +191,7 @@ def _(event):
     """
     Select currently focused folder
     """
-    if focus_folder:
+    if global_focus_on_folder:
         load_tasks()
 
 
@@ -198,14 +200,14 @@ def _(event):
     """
     Go back to folder scroll mode
     """
-    global focus_index_task
-    global focus_folder
+    global global_focus_index_task
+    global global_focus_on_folder
     global right_window
 
-    if tasks:
-        tasks[focus_index_task].style = ""
+    if global_tasks_ui:
+        global_tasks_ui[global_focus_index_task].style = ""
     right_window.children = [Window()]
-    focus_folder = True
+    global_focus_on_folder = True
 
 
 @kb.add("c")
@@ -215,13 +217,14 @@ def _(event):
     """
 
     # Only receive input on task view mode
-    if focus_folder or (not focus_folder and not tasks):
+    if global_focus_on_folder or (not global_focus_on_folder and not global_tasks_ui):
         return
 
-    global waiting_for_confirmation
+    global global_waiting_confirmation
     global prompt_window
+    global global_tasks
 
-    waiting_for_confirmation = True
+    global_waiting_confirmation = True
 
     input_field = TextArea(
         height=1,
@@ -233,16 +236,16 @@ def _(event):
 
     # Confirmation of commands
     def confirm(buff):
-        global waiting_for_confirmation
+        global global_waiting_confirmation
         global prompt_window
         user_input = input_field.text
         if user_input == "y":
             # Mark task as complete
-            auth.complete_task(folder2id[focus_index_folder], task2id[focus_index_task])
+            todo_api.complete_task(global_folders[global_focus_index_folder], global_tasks[global_focus_index_task].title)
             load_tasks()
 
         # Return to normal state
-        waiting_for_confirmation = False
+        global_waiting_confirmation = False
         prompt_window = Window()
 
     input_field.accept_handler = confirm
@@ -256,13 +259,13 @@ def _(event):
     """
     Create new task/folder
     """
-    global waiting_for_confirmation
+    global global_waiting_confirmation
     global prompt_window
 
-    waiting_for_confirmation = True
+    global_waiting_confirmation = True
 
     # Check if we are creating new task or folder
-    if focus_folder:
+    if global_focus_on_folder:
         # We are creating a new folder
         input_field = TextArea(
             height=1,
@@ -274,19 +277,19 @@ def _(event):
 
         # Get new folder name
         def get_name(buff):
-            global waiting_for_confirmation
+            global global_waiting_confirmation
             global prompt_window
             global left_window
 
             user_input = input_field.text
             if user_input:
                 # Create new folder
-                auth.create_folder(user_input)
+                todo_api.create_list(user_input)
                 # Refresh folders
                 load_folders()
 
             # Return to normal state
-            waiting_for_confirmation = False
+            global_waiting_confirmation = False
             prompt_window = Window()
 
     else:
@@ -301,18 +304,18 @@ def _(event):
 
         # Get new task name
         def get_name(buff):
-            global waiting_for_confirmation
+            global global_waiting_confirmation
             global prompt_window
             user_input = input_field.text
 
             if user_input:
                 # Create new task
-                auth.create_task(user_input, folder2id[focus_index_folder])
+                todo_api.create_task(user_input, global_folders[global_focus_index_folder])
                 # Refresh tasks
                 load_tasks()
 
             # Return to normal state
-            waiting_for_confirmation = False
+            global_waiting_confirmation = False
             prompt_window = Window()
 
     input_field.accept_handler = get_name
@@ -326,18 +329,18 @@ def _(event):
     """
     Escape prompt
     """
-    global waiting_for_confirmation
+    global global_waiting_confirmation
     global prompt_window
 
     # Return to normal state
-    waiting_for_confirmation = False
+    global_waiting_confirmation = False
     prompt_window = Window()
 
 
 @Condition
 def is_not_waiting_for_confirmation():
     "Enable key bindings when not waiting for confirmation"
-    return not waiting_for_confirmation
+    return not global_waiting_confirmation
 
 
 kb = ConditionalKeyBindings(kb, is_not_waiting_for_confirmation)
@@ -348,28 +351,30 @@ def load_tasks():
     Load tasks of currently focused folder
     """
 
-    global focus_folder
-    global focus_index_task
-    global tasks
-    global task2id
+    global global_focus_on_folder
+    global global_focus_index_task
+    global global_tasks_ui
+    global global_task2id
+    global global_tasks
 
-    task_data = auth.list_tasks(all_=False, folder=folder2id[focus_index_folder])
+    folder_name = global_folders[global_focus_index_folder]
+    global_tasks = todo_api.query_tasks(folder_name, num_tasks=100)
 
-    tasks = []
-    for idx, t in enumerate(task_data):
-        id_ = t["id"]
-        title = t["title"]
-        tasks.append(Window(FormattedTextControl(title), height=1))
-        task2id[idx] = id_
+    global_tasks_ui = []
+    for idx, t in enumerate(global_tasks):
+        id_ = t.id
+        title = t.title
+        global_tasks_ui.append(Window(FormattedTextControl(title), height=1))
+        global_task2id[idx] = id_
 
     # Add empty container if task list is empty
-    if not tasks:
+    if not global_tasks_ui:
         right_window.children = [Window(FormattedTextControl("-- No Tasks --"))]
     else:
-        right_window.children = tasks
-        focus_index_task = 0
-        tasks[focus_index_task].style = color_task
-    focus_folder = False
+        right_window.children = global_tasks_ui
+        global_focus_index_task = 0
+        global_tasks_ui[global_focus_index_task].style = COLOR_TASK
+    global_focus_on_folder = False
 
 
 # Creating an `Application` instance

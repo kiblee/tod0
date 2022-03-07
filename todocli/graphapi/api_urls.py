@@ -1,4 +1,4 @@
-from todocli.odata_system_query import ODataSystemQuery
+from todocli.graphapi.odata_system_query import ODataSystemQuery
 
 base_api_url = "https://graph.microsoft.com/v1.0/me/todo"
 
