@@ -1,8 +1,6 @@
 import re
-import pytz
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Union
-from tzlocal import get_localzone
 
 
 class TimeExpressionNotRecognized(Exception):
@@ -159,9 +157,7 @@ def parse_datetime(datetime_str: str):
 
 
 def datetime_to_api_timestamp(dt: datetime):
-    tz = get_localzone()
-    local_dt = tz.localize(dt, is_dst=None)
-    utc_dt = local_dt.astimezone(pytz.utc)
+    utc_dt = dt.astimezone(timezone.utc)
     timestamp_str = utc_dt.strftime("%Y-%m-%dT%H:%M:%S")
 
     api_dt = {"dateTime": timestamp_str, "timeZone": "UTC"}
@@ -169,7 +165,7 @@ def datetime_to_api_timestamp(dt: datetime):
 
 
 def api_timestamp_to_datetime(api_dt: Union[str, dict]):
-    """Convertes the datetime string returned by the API to python datetime object"""
+    """Converts the datetime string returned by the API to python datetime object"""
 
     """
     Somehow this string is formatted with 7 digits for 'microsecond' resolution, so crop the last digit (and trailing Z)
@@ -185,5 +181,9 @@ def api_timestamp_to_datetime(api_dt: Union[str, dict]):
         raise
 
     dt = datetime.strptime(api_dt_str_mod, "%Y-%m-%dT%H:%M:%S.%f")
-    dt = pytz.utc.localize(dt)
+    dt = utc_to_local(dt)
     return dt
+
+
+def utc_to_local(_dt):
+    return _dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
