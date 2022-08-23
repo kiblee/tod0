@@ -8,8 +8,6 @@ from todocli.utils.datetime_util import (
     TimeExpressionNotRecognized,
     ErrorParsingTime,
 )
-from todocli.error import eprint
-from todocli.help_msg import help_msg
 
 
 class InvalidTaskPath(Exception):
@@ -31,27 +29,21 @@ def parse_task_path(task_path):
         return "Tasks", task_path
 
 
-def print_help():
-    print(help_msg)
-
-
-def print_list(item_list, print_line_nums):
+def print_list(item_list):
     for i, x in enumerate(item_list):
-        if print_line_nums:
-            print("[{}] ".format(i), end="")
-        print(x)
+        print(f"[{i}]\t{x}")
 
 
 def ls(args):
     lists = todo_api.query_lists()
     lists_names = [l.display_name for l in lists]
-    print_list(lists_names, args.display_linenums)
+    print_list(lists_names)
 
 
 def lst(args):
     tasks = todo_api.query_tasks(args.list_name)
     tasks_titles = [x.title for x in tasks]
-    print_list(tasks_titles, args.display_linenums)
+    print_list(tasks_titles)
 
 
 def new(args):
@@ -87,19 +79,6 @@ def rm(args):
     todo_api.remove_task(task_list, try_parse_as_int(name))
 
 
-class ArgumentParser(argparse.ArgumentParser):
-    class OnExit(Exception):
-        pass
-
-    def exit(self, status=0, message=None):
-        if message:
-            self._print_message(message, sys.stderr)
-        raise self.OnExit()
-
-    def print_help(self, file=None):
-        print_help()
-
-
 helptext_task_name = """
         Specify the task to complete.
         Can be one of the following:
@@ -107,76 +86,52 @@ helptext_task_name = """
         list_name/task_name
         task_number
         list_name/task_number
-
-        'task_number' is the number displayed when providing the argument '-n'
         """
 
 
 def setup_parser():
-    parser = ArgumentParser(description="Command line interface for Microsoft ToDo")
-
+    parser = argparse.ArgumentParser(
+        description="Command line interface for Microsoft ToDo"
+    )
     parser.set_defaults(func=None)
     subparsers = parser.add_subparsers(help="Command to execute")
 
-    def parser_ls():
-        subparser = subparsers.add_parser("ls", help="Display all lists")
-        subparser.set_defaults(func=ls)
+    # create parser for 'ls' command
+    subparser = subparsers.add_parser("ls", help="Display all lists")
+    subparser.set_defaults(func=ls)
 
-    def parser_lst():
-        subparser = subparsers.add_parser("lst", help="Display tasks from a list")
-        subparser.add_argument(
-            "list_name",
-            nargs="?",
-            default="Tasks",
-            help="This optional argument specifies the list from which the tasks are displayed."
-            "If this parameter is omitted, \
-                                    all tasks from the default task list will be displayed",
-        )
-        subparser.set_defaults(func=lst)
-
-    def parser_new():
-        subparser = subparsers.add_parser("new", help="Add a new task")
-        subparser.add_argument("task_name", help=helptext_task_name)
-        subparser.add_argument("-r", "--reminder")
-        subparser.set_defaults(func=new)
-
-    def parser_newl():
-        subparser = subparsers.add_parser("newl", help="Add a new list")
-        subparser.add_argument("list_name", help="Name of the list to create")
-        subparser.set_defaults(func=newl)
-
-    def parser_complete():
-        subparser = subparsers.add_parser("complete", help="Complete a Task")
-        subparser.add_argument("task_name", help=helptext_task_name)
-        subparser.set_defaults(func=complete)
-
-    def parser_rm():
-        subparser = subparsers.add_parser("rm", help="Remove a Task")
-        subparser.add_argument("task_name", help=helptext_task_name)
-        subparser.set_defaults(func=rm)
-
-    parser_lst()
-    parser_ls()
-    parser_new()
-    parser_newl()
-    parser_complete()
-    parser_rm()
-
-    parser.add_argument(
-        "-n",
-        "--display_linenums",
-        action="store_true",
-        default=False,
-        help="Display line numbers for the results",
+    # create parser for 'lst' command
+    subparser = subparsers.add_parser("lst", help="Display tasks from a list")
+    subparser.add_argument(
+        "list_name",
+        nargs="?",
+        default="Tasks",
+        help="This optional argument specifies the list from which the tasks are displayed."
+        "If this parameter is omitted, \
+                                all tasks from the default task list will be displayed",
     )
-    parser.add_argument(
-        "-i",
-        "--interactive",
-        action="store_true",
-        default=False,
-        help="Interactive mode. \
-                            Don't exit the application after invoking a command, ask for follow up commands instead.",
-    )
+    subparser.set_defaults(func=lst)
+
+    # create parser for 'new' command
+    subparser = subparsers.add_parser("new", help="Add a new task")
+    subparser.add_argument("task_name", help=helptext_task_name)
+    subparser.add_argument("-r", "--reminder")
+    subparser.set_defaults(func=new)
+
+    # create parser for 'newl' command
+    subparser = subparsers.add_parser("newl", help="Add a new list")
+    subparser.add_argument("list_name", help="Name of the list to create")
+    subparser.set_defaults(func=newl)
+
+    # create parser for 'complete' command
+    subparser = subparsers.add_parser("complete", help="Complete a Task")
+    subparser.add_argument("task_name", help=helptext_task_name)
+    subparser.set_defaults(func=complete)
+
+    # create parser for 'rm' command
+    subparser = subparsers.add_parser("rm", help="Remove a Task")
+    subparser.add_argument("task_name", help=helptext_task_name)
+    subparser.set_defaults(func=rm)
 
     return parser
 
@@ -184,11 +139,6 @@ def setup_parser():
 def main():
     try:
         parser = setup_parser()
-
-        isInteractive = False
-
-        if "-i" in sys.argv or "--interactive" in sys.argv:
-            isInteractive = True
 
         while True:
             try:
@@ -203,37 +153,31 @@ def main():
 
             except argparse.ArgumentError:
                 pass
-            except ArgumentParser.OnExit:
-                pass
             except todo_api.TaskNotFoundByName as e:
-                eprint(e.message)
+                print(e.message)
             except todo_api.ListNotFound as e:
-                eprint(e.message)
+                print(e.message)
             except todo_api.TaskNotFoundByIndex as e:
-                eprint(e.message)
+                print(e.message)
             except InvalidTaskPath as e:
-                eprint(e.message)
+                print(e.message)
             except TimeExpressionNotRecognized as e:
-                eprint(e.message)
+                print(e.message)
             except ErrorParsingTime as e:
-                eprint(e.message)
+                print(e.message)
             finally:
                 sys.stdout.flush()
                 sys.stderr.flush()
-                pass
 
-            if isInteractive:
-                arg = input("\nInput command: ")
-                args = shlex.split(arg)
-                sys.argv = sys.argv[:1]
-                sys.argv += args
-            else:
-                exit()
+            arg = input("\nInput command: ")
+            args = shlex.split(arg)
+            sys.argv = sys.argv[:1]
+            sys.argv += args
+
     except KeyboardInterrupt:
         print("\n")
         exit(0)
 
 
 if __name__ == "__main__":
-    sys.argv.append("-i")
     main()
