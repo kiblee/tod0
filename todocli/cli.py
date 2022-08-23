@@ -90,7 +90,9 @@ helptext_task_name = """
 
 
 def setup_parser():
-    parser = argparse.ArgumentParser(description="Command line interface for Microsoft ToDo")
+    parser = argparse.ArgumentParser(
+        description="Command line interface for Microsoft ToDo"
+    )
     parser.set_defaults(func=None)
     subparsers = parser.add_subparsers(help="Command to execute")
 
