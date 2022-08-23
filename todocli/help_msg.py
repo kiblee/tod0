@@ -29,13 +29,6 @@ OPTIONS
     -h, --help
         Display a usage message.
 
-    -i, --interactive
-        Interactive mode. 
-        Don't exit after invoking a command, but ask for follow up commands instead.
-
-    -n, --display_linenums
-        Display a line number for all lines which are output.
-
 Specifying a task:
     For commands which take 'task' as a parameter, 'task' can be one of the following:
 
