@@ -50,7 +50,7 @@ def get_lists():
 
 
 def create_list(title: str):
-    request_body = {'displayName': title}
+    request_body = {"displayName": title}
     session = get_oauth_session()
     response = session.post(endpoints.new_list(), json=request_body)
     return True if response.ok else response.raise_for_status()
@@ -58,9 +58,11 @@ def create_list(title: str):
 
 # TODO No associated command
 def rename_list(old_title: str, new_title: str):
-    request_body = {'title': new_title}
+    request_body = {"title": new_title}
     session = get_oauth_session()
-    response = session.patch(endpoints.modify_list(get_list_id_by_name(old_title)), json=request_body)
+    response = session.patch(
+        endpoints.modify_list(get_list_id_by_name(old_title)), json=request_body
+    )
     return True if response.ok else response.raise_for_status()
 
 
@@ -76,7 +78,10 @@ def get_tasks(list_name: str, num_tasks: int = 100):
 
 def create_task(task_name: str, list_name: str, reminder_datetime: datetime = None):
     url = endpoints.new_task(get_list_id_by_name(list_name))
-    request_body = {'title': task_name, 'reminderDateTime': datetime_to_api_timestamp(reminder_datetime)}
+    request_body = {
+        "title": task_name,
+        "reminderDateTime": datetime_to_api_timestamp(reminder_datetime),
+    }
     session = get_oauth_session()
     response = session.post(url, json=request_body)
     return True if response.ok else response.raise_for_status()
@@ -86,7 +91,10 @@ def complete_task(list_name: str, task_name: Union[str, int]):
     url = endpoints.modify_task(
         get_list_id_by_name(list_name), get_task_id(list_name, task_name)
     )
-    request_body = {'status': TaskStatus.COMPLETED, 'completedDateTime': datetime_to_api_timestamp(datetime.now())}
+    request_body = {
+        "status": TaskStatus.COMPLETED,
+        "completedDateTime": datetime_to_api_timestamp(datetime.now()),
+    }
     session = get_oauth_session()
     response = session.patch(url, json=request_body)
     return True if response.ok else response.raise_for_status()
@@ -153,6 +161,3 @@ def get_task_id(list_name: str, task_name_or_listpos: Union[str, int]):
         return get_task_id_by_list_position(list_name, task_name_or_listpos)
     else:
         raise
-
-
-
