@@ -35,13 +35,13 @@ def print_list(item_list):
 
 
 def ls(args):
-    lists = todo_api.query_lists()
+    lists = todo_api.get_lists()
     lists_names = [l.display_name for l in lists]
     print_list(lists_names)
 
 
 def lst(args):
-    tasks = todo_api.query_tasks(args.list_name)
+    tasks = todo_api.get_tasks(args.list_name)
     tasks_titles = [x.title for x in tasks]
     print_list(tasks_titles)
 

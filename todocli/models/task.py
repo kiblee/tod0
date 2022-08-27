@@ -2,24 +2,26 @@ from enum import Enum
 from todocli.utils.datetime_util import api_timestamp_to_datetime
 
 
+class TaskStatus(str, Enum):
+    COMPLETED = "completed"
+    NOT_STARTED = "notStarted"
+    IN_PROGRESS = "inProgress"
+    WAITING_ON_OTHERS = "waitingOnOthers"
+    DEFERRED = "deferred"
+
+
+class TaskImportance(str, Enum):
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+
+
 class Task:
-    class Status(Enum):
-        Completed = "completed"
-        NotStarted = "notStarted"
-        InProgress = "inProgress"
-        WaitingOnOthers = "waitingOnOthers"
-        Deferred = "deferred"
-
-    class Importance(Enum):
-        Low = "low"
-        Normal = "normal"
-        High = "high"
-
     def __init__(self, query_result):
         self.title = query_result["title"]
         self.id = query_result["id"]
-        self.importance = Task.Importance(query_result["importance"])
-        self.status = Task.Status(query_result["status"])
+        self.importance = TaskImportance(query_result["importance"])
+        self.status = TaskStatus(query_result["status"])
         self.created_datetime = api_timestamp_to_datetime(
             query_result["createdDateTime"]
         )
