@@ -54,7 +54,7 @@ def load_folders():
     global_folders.clear()
 
     # Retrieve folder data
-    lists = todo_api.query_lists()
+    lists = todo_api.get_lists()
     for idx, _list in enumerate(lists):
         global_folder2id[idx] = _list.id
         global_folders.append(_list.display_name)
@@ -371,7 +371,7 @@ def load_tasks():
     global global_tasks
 
     folder_name = global_folders[global_focus_index_folder]
-    global_tasks = todo_api.query_tasks(folder_name, num_tasks=100)
+    global_tasks = todo_api.get_tasks(folder_name, num_tasks=100)
 
     global_tasks_ui = []
     for idx, t in enumerate(global_tasks):
