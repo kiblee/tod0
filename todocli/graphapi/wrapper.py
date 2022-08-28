@@ -60,15 +60,15 @@ def rename_list(old_title: str, new_title: str):
     list_id = get_list_id_by_name(old_title)
     request_body = {"title": new_title}
     session = get_oauth_session()
-    response = session.patch(
-        f"{BASE_URL}/{list_id}", json=request_body
-    )
+    response = session.patch(f"{BASE_URL}/{list_id}", json=request_body)
     return True if response.ok else response.raise_for_status()
 
 
 def get_tasks(list_name: str, num_tasks: int = 100):
     list_id = get_list_id_by_name(list_name)
-    endpoint = f"{BASE_URL}/{list_id}/tasks?$filter=status ne 'completed'&$top={num_tasks}"
+    endpoint = (
+        f"{BASE_URL}/{list_id}/tasks?$filter=status ne 'completed'&$top={num_tasks}"
+    )
     session = get_oauth_session()
     response = session.get(endpoint)
     response_value = parse_response(response)
@@ -131,7 +131,7 @@ def get_task_id_by_name(list_name: str, task_name: str):
             return [Task(x) for x in response_value][0].id
         except IndexError:
             raise TaskNotFoundByName(task_name, list_name)
-    #elif isinstance(task_name, int):
+    # elif isinstance(task_name, int):
     #    tasks = get_tasks(list_name, task_list_position + 1)
     #    try:
     #        return tasks[task_list_position].id
