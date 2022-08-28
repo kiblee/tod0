@@ -2,7 +2,7 @@ import argparse
 import shlex
 import sys
 
-import todocli.graphapi.todo_api as todo_api
+import todocli.graphapi.wrapper as wrapper
 from todocli.utils.datetime_util import (
     parse_datetime,
     TimeExpressionNotRecognized,
@@ -35,13 +35,13 @@ def print_list(item_list):
 
 
 def ls(args):
-    lists = todo_api.get_lists()
+    lists = wrapper.get_lists()
     lists_names = [l.display_name for l in lists]
     print_list(lists_names)
 
 
 def lst(args):
-    tasks = todo_api.get_tasks(args.list_name)
+    tasks = wrapper.get_tasks(args.list_name)
     tasks_titles = [x.title for x in tasks]
     print_list(tasks_titles)
 
@@ -55,11 +55,11 @@ def new(args):
     if reminder_date_time_str is not None:
         reminder_datetime = parse_datetime(reminder_date_time_str)
 
-    todo_api.create_task(name, task_list, reminder_datetime)
+    wrapper.create_task(name, task_list, reminder_datetime)
 
 
 def newl(args):
-    todo_api.create_list(args.list_name)
+    wrapper.create_list(args.list_name)
 
 
 def try_parse_as_int(input_str: str):
@@ -71,12 +71,12 @@ def try_parse_as_int(input_str: str):
 
 def complete(args):
     task_list, name = parse_task_path(args.task_name)
-    todo_api.complete_task(task_list, try_parse_as_int(name))
+    wrapper.complete_task(task_list, try_parse_as_int(name))
 
 
 def rm(args):
     task_list, name = parse_task_path(args.task_name)
-    todo_api.remove_task(task_list, try_parse_as_int(name))
+    wrapper.remove_task(task_list, try_parse_as_int(name))
 
 
 helptext_task_name = """
@@ -153,11 +153,11 @@ def main():
 
             except argparse.ArgumentError:
                 pass
-            except todo_api.TaskNotFoundByName as e:
+            except wrapper.TaskNotFoundByName as e:
                 print(e.message)
-            except todo_api.ListNotFound as e:
+            except wrapper.ListNotFound as e:
                 print(e.message)
-            except todo_api.TaskNotFoundByIndex as e:
+            except wrapper.TaskNotFoundByIndex as e:
                 print(e.message)
             except InvalidTaskPath as e:
                 print(e.message)

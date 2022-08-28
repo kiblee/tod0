@@ -157,6 +157,9 @@ def parse_datetime(datetime_str: str):
 
 
 def datetime_to_api_timestamp(dt: datetime):
+    if dt is None:
+        return None
+
     utc_dt = dt.astimezone(timezone.utc)
     timestamp_str = utc_dt.strftime("%Y-%m-%dT%H:%M:%S")
 

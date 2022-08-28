@@ -18,7 +18,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.widgets import TextArea
 
-import todocli.graphapi.todo_api as todo_api
+import todocli.graphapi.wrapper as wrapper
 
 # Colors
 COLOR_FOLDER = "bg:#006699"
@@ -54,7 +54,7 @@ def load_folders():
     global_folders.clear()
 
     # Retrieve folder data
-    lists = todo_api.get_lists()
+    lists = wrapper.get_lists()
     for idx, _list in enumerate(lists):
         global_folder2id[idx] = _list.id
         global_folders.append(_list.display_name)
@@ -249,7 +249,7 @@ def _(event):
         user_input = input_field.text
         if user_input == "y":
             # Mark task as complete
-            todo_api.complete_task(
+            wrapper.complete_task(
                 global_folders[global_focus_index_folder],
                 global_tasks[global_focus_index_task].title,
             )
@@ -295,7 +295,7 @@ def _(event):
             user_input = input_field.text
             if user_input:
                 # Create new folder
-                todo_api.create_list(user_input)
+                wrapper.create_list(user_input)
                 # Refresh folders
                 load_folders()
 
@@ -321,7 +321,7 @@ def _(event):
 
             if user_input:
                 # Create new task
-                todo_api.create_task(
+                wrapper.create_task(
                     user_input, global_folders[global_focus_index_folder]
                 )
                 # Refresh tasks
@@ -371,7 +371,7 @@ def load_tasks():
     global global_tasks
 
     folder_name = global_folders[global_focus_index_folder]
-    global_tasks = todo_api.get_tasks(folder_name, num_tasks=100)
+    global_tasks = wrapper.get_tasks(folder_name, num_tasks=100)
 
     global_tasks_ui = []
     for idx, t in enumerate(global_tasks):
