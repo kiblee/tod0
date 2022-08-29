@@ -5,7 +5,7 @@ orbs:
   python: circleci/python@0.2.1
 
 jobs:
-  build:
+  build_and_test:
     executor: python/default
     steps:
       - checkout
@@ -16,6 +16,7 @@ jobs:
           command: |
             pip install -e .
             python3 tests/test_datetime_parser.py
+            python3 tests/test_graph_wrapper.py
           name: run_tests
 
   python_lint:
@@ -33,5 +34,5 @@ jobs:
 workflows:
   main:
     jobs:
-      - build
+      - build_and_test
       - python_lint
