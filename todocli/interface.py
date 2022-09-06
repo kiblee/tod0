@@ -19,6 +19,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.widgets import TextArea
 
 import todocli.graphapi.wrapper as wrapper
+from todocli.utils import update_checker
 
 # Colors
 COLOR_FOLDER = "bg:#006699"
@@ -407,4 +408,5 @@ def run():
 
 
 if __name__ == "__main__":
+    update_checker()
     run()

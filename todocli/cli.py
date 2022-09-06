@@ -3,6 +3,7 @@ import shlex
 import sys
 
 import todocli.graphapi.wrapper as wrapper
+from todocli.utils import update_checker
 from todocli.utils.datetime_util import (
     parse_datetime,
     TimeExpressionNotRecognized,
@@ -180,4 +181,5 @@ def main():
 
 
 if __name__ == "__main__":
+    update_checker()
     main()
