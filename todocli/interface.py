@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from asyncio import tasks
+
 from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import (
     KeyBindings,
@@ -33,9 +33,7 @@ global_focus_on_folder = True
 global_waiting_confirmation = False
 
 # Global data structures for ui
-global_folder2id = {}
-global_folders = []
-global_task2id = {}
+global_lists = []
 global_tasks_ui = []
 global_tasks = []
 
@@ -46,68 +44,22 @@ def load_folders():
     """
     global left_window
     global global_focus_index_folder
-    global global_folder2id
-    global global_folders
+    global global_lists
 
     # Reset all folder data structures
     global_focus_index_folder = 0
-    global_folder2id.clear()
-    global_folders.clear()
 
     # Retrieve folder data
-    lists = wrapper.get_lists()
-    for idx, _list in enumerate(lists):
-        global_folder2id[idx] = _list.id
-        global_folders.append(_list.display_name)
+    global_lists = wrapper.get_lists()
 
     # Layout interface
     left_window.children = [
-        Window(FormattedTextControl(f), height=1, width=50) for f in global_folders
+        Window(FormattedTextControl(f.display_name), height=1, width=50) for f in global_lists
     ]
 
     # Highlight first folder
     left_window.children[0].style = COLOR_FOLDER
 
-
-left_window = HSplit([Window()])
-
-# Get folders to load on screen
-load_folders()
-
-right_window = HSplit([Window()])
-body = VSplit(
-    [
-        left_window,
-        Window(width=1, char="|", style="class:line"),
-        right_window,
-    ]
-)
-
-
-def get_titlebar_text():
-    return [("class:title", " tod0 ")]
-
-
-prompt_window = Window(
-    height=1, content=FormattedTextControl(""), align=WindowAlign.LEFT
-)
-
-root_container = HSplit(
-    [
-        # The titlebar.
-        Window(
-            height=1,
-            content=FormattedTextControl(get_titlebar_text),
-            align=WindowAlign.CENTER,
-        ),
-        # Horizontal separator.
-        Window(height=1, char="-", style="class:line"),
-        # The 'body', like defined above.
-        body,
-        Window(height=1, char=".", style="class:line"),
-        DynamicContainer(lambda: prompt_window),
-    ]
-)
 
 
 # Key bindings
@@ -158,7 +110,7 @@ def _(event):
         folder_window = left_window.children
         folder_window[global_focus_index_folder].style = ""
         global_focus_index_folder = (global_focus_index_folder + 1) % len(
-            global_folders
+            global_lists
         )
         folder_window[global_focus_index_folder].style = COLOR_FOLDER
     else:
@@ -182,7 +134,7 @@ def _(event):
         folder_window = left_window.children
         folder_window[global_focus_index_folder].style = ""
         global_focus_index_folder = (global_focus_index_folder - 1) % len(
-            global_folders
+            global_lists
         )
         folder_window[global_focus_index_folder].style = COLOR_FOLDER
     else:
@@ -251,8 +203,8 @@ def _(event):
         if user_input == "y":
             # Mark task as complete
             wrapper.complete_task(
-                global_folders[global_focus_index_folder],
-                global_tasks[global_focus_index_task].title,
+                list_id=global_lists[global_focus_index_folder].id,
+                task_id=global_tasks[global_focus_index_task].id,
             )
             load_tasks()
 
@@ -323,7 +275,7 @@ def _(event):
             if user_input:
                 # Create new task
                 wrapper.create_task(
-                    user_input, global_folders[global_focus_index_folder]
+                    user_input, list_id=global_lists[global_focus_index_folder].id
                 )
                 # Refresh tasks
                 load_tasks()
@@ -368,18 +320,14 @@ def load_tasks():
     global global_focus_on_folder
     global global_focus_index_task
     global global_tasks_ui
-    global global_task2id
     global global_tasks
 
-    folder_name = global_folders[global_focus_index_folder]
-    global_tasks = wrapper.get_tasks(folder_name, num_tasks=100)
+    selected_list = global_lists[global_focus_index_folder]
+    global_tasks = wrapper.get_tasks(list_id=selected_list.id, num_tasks=100)
 
     global_tasks_ui = []
     for idx, t in enumerate(global_tasks):
-        id_ = t.id
-        title = t.title
-        global_tasks_ui.append(Window(FormattedTextControl(title), height=1))
-        global_task2id[idx] = id_
+        global_tasks_ui.append(Window(FormattedTextControl(t.title), height=1))
 
     # Add empty container if task list is empty
     if not global_tasks_ui:
@@ -391,6 +339,41 @@ def load_tasks():
     global_focus_on_folder = False
 
 
+left_window = HSplit([Window()])
+
+# Get folders to load on screen
+load_folders()
+
+right_window = HSplit([Window()])
+body = VSplit(
+    [
+        left_window,
+        Window(width=1, char="|", style="class:line"),
+        right_window,
+    ]
+)
+
+prompt_window = Window(
+    height=1, content=FormattedTextControl(""), align=WindowAlign.LEFT
+)
+
+root_container = HSplit(
+    [
+        # The titlebar.
+        Window(
+            height=1,
+            content=FormattedTextControl([("class:title", " tod0 ")]),
+            align=WindowAlign.CENTER,
+        ),
+        # Horizontal separator.
+        Window(height=1, char="-", style="class:line"),
+        # The 'body', like defined above.
+        body,
+        Window(height=1, char=".", style="class:line"),
+        DynamicContainer(lambda: prompt_window),
+    ]
+)
+
 # Creating an `Application` instance
 # ----------------------------------
 application = Application(
@@ -399,7 +382,6 @@ application = Application(
     mouse_support=False,
     full_screen=False,
 )
-
 
 # Run the application
 # -------------------

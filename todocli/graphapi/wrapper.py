@@ -64,8 +64,13 @@ def rename_list(old_title: str, new_title: str):
     return True if response.ok else response.raise_for_status()
 
 
-def get_tasks(list_name: str, num_tasks: int = 100):
-    list_id = get_list_id_by_name(list_name)
+def get_tasks(list_name: str=None, list_id: str = None, num_tasks: int = 100):
+    assert (list_name is not None) or (list_id is not None), 'You must provide list_name or list_id'
+
+    # For compatibility with cli
+    if list_id is None:
+        list_id = get_list_id_by_name(list_name)
+
     endpoint = (
         f"{BASE_URL}/{list_id}/tasks?$filter=status ne 'completed'&$top={num_tasks}"
     )
@@ -75,8 +80,13 @@ def get_tasks(list_name: str, num_tasks: int = 100):
     return [Task(x) for x in response_value]
 
 
-def create_task(task_name: str, list_name: str, reminder_datetime: datetime = None):
-    list_id = get_list_id_by_name(list_name)
+def create_task(task_name: str, list_name: str=None, list_id: str = None, reminder_datetime: datetime = None):
+    assert (list_name is not None) or (list_id is not None), 'You must provide list_name or list_id'
+
+    # For compatibility with cli
+    if list_id is None:
+        list_id = get_list_id_by_name(list_name)
+
     endpoint = f"{BASE_URL}/{list_id}/tasks"
     request_body = {
         "title": task_name,
@@ -87,9 +97,16 @@ def create_task(task_name: str, list_name: str, reminder_datetime: datetime = No
     return True if response.ok else response.raise_for_status()
 
 
-def complete_task(list_name: str, task_name: Union[str, int]):
-    list_id = get_list_id_by_name(list_name)
-    task_id = get_task_id_by_name(list_name, task_name)
+def complete_task(list_name: str=None, task_name: Union[str, int]=None, list_id: str = None, task_id: str = None):
+    assert (list_name is not None) or (list_id is not None), 'You must provide list_name or list_id'
+    assert (task_name is not None) or (task_id is not None), 'You must provide task_name or task_id'
+
+    # For compatibility with cli
+    if list_id is None:
+        list_id = get_list_id_by_name(list_name)
+    if task_id is None:
+        task_id = get_task_id_by_name(list_name, task_name)
+
     endpoint = f"{BASE_URL}/{list_id}/tasks/{task_id}"
     request_body = {
         "status": TaskStatus.COMPLETED,

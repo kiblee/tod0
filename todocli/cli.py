@@ -42,7 +42,7 @@ def ls(args):
 
 
 def lst(args):
-    tasks = wrapper.get_tasks(args.list_name)
+    tasks = wrapper.get_tasks(list_name=args.list_name)
     tasks_titles = [x.title for x in tasks]
     print_list(tasks_titles)
 
@@ -56,7 +56,7 @@ def new(args):
     if reminder_date_time_str is not None:
         reminder_datetime = parse_datetime(reminder_date_time_str)
 
-    wrapper.create_task(name, task_list, reminder_datetime)
+    wrapper.create_task(name, list_name=task_list, reminder_datetime=reminder_datetime)
 
 
 def newl(args):
@@ -72,7 +72,7 @@ def try_parse_as_int(input_str: str):
 
 def complete(args):
     task_list, name = parse_task_path(args.task_name)
-    wrapper.complete_task(task_list, try_parse_as_int(name))
+    wrapper.complete_task(list_name=task_list, task_name=try_parse_as_int(name))
 
 
 def rm(args):
