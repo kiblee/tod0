@@ -64,8 +64,10 @@ def rename_list(old_title: str, new_title: str):
     return True if response.ok else response.raise_for_status()
 
 
-def get_tasks(list_name: str=None, list_id: str = None, num_tasks: int = 100):
-    assert (list_name is not None) or (list_id is not None), 'You must provide list_name or list_id'
+def get_tasks(list_name: str = None, list_id: str = None, num_tasks: int = 100):
+    assert (list_name is not None) or (
+        list_id is not None
+    ), "You must provide list_name or list_id"
 
     # For compatibility with cli
     if list_id is None:
@@ -80,8 +82,15 @@ def get_tasks(list_name: str=None, list_id: str = None, num_tasks: int = 100):
     return [Task(x) for x in response_value]
 
 
-def create_task(task_name: str, list_name: str=None, list_id: str = None, reminder_datetime: datetime = None):
-    assert (list_name is not None) or (list_id is not None), 'You must provide list_name or list_id'
+def create_task(
+    task_name: str,
+    list_name: str = None,
+    list_id: str = None,
+    reminder_datetime: datetime = None,
+):
+    assert (list_name is not None) or (
+        list_id is not None
+    ), "You must provide list_name or list_id"
 
     # For compatibility with cli
     if list_id is None:
@@ -97,9 +106,18 @@ def create_task(task_name: str, list_name: str=None, list_id: str = None, remind
     return True if response.ok else response.raise_for_status()
 
 
-def complete_task(list_name: str=None, task_name: Union[str, int]=None, list_id: str = None, task_id: str = None):
-    assert (list_name is not None) or (list_id is not None), 'You must provide list_name or list_id'
-    assert (task_name is not None) or (task_id is not None), 'You must provide task_name or task_id'
+def complete_task(
+    list_name: str = None,
+    task_name: Union[str, int] = None,
+    list_id: str = None,
+    task_id: str = None,
+):
+    assert (list_name is not None) or (
+        list_id is not None
+    ), "You must provide list_name or list_id"
+    assert (task_name is not None) or (
+        task_id is not None
+    ), "You must provide task_name or task_id"
 
     # For compatibility with cli
     if list_id is None:
