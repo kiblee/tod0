@@ -13,6 +13,8 @@ from prompt_toolkit.layout.containers import (
     Window,
     WindowAlign,
     DynamicContainer,
+    HorizontalAlign,
+    VerticalAlign,
 )
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
@@ -27,7 +29,7 @@ COLOR_TASK = "bg:#006699"
 
 global_focus_index_folder = 0
 global_focus_index_task = 0
-global_focus_on_folder = True
+global_is_focus_on_folder = True
 
 # This flag is used to direct user input to confirmation prompt
 global_waiting_confirmation = False
@@ -54,12 +56,11 @@ def load_folders():
 
     # Layout interface
     left_window.children = [
-        Window(FormattedTextControl(f.display_name), height=1, width=50) for f in global_lists
+        Window(FormattedTextControl(f.display_name), width=50) for f in global_lists
     ]
 
     # Highlight first folder
     left_window.children[0].style = COLOR_FOLDER
-
 
 
 # Key bindings
@@ -105,13 +106,11 @@ def _(event):
     Move selection down 1
     """
 
-    if global_focus_on_folder:
+    if global_is_focus_on_folder:
         global global_focus_index_folder
         folder_window = left_window.children
         folder_window[global_focus_index_folder].style = ""
-        global_focus_index_folder = (global_focus_index_folder + 1) % len(
-            global_lists
-        )
+        global_focus_index_folder = (global_focus_index_folder + 1) % len(global_lists)
         folder_window[global_focus_index_folder].style = COLOR_FOLDER
     else:
         global global_focus_index_task
@@ -129,13 +128,11 @@ def _(event):
     Move selection up 1
     """
 
-    if global_focus_on_folder:
+    if global_is_focus_on_folder:
         global global_focus_index_folder
         folder_window = left_window.children
         folder_window[global_focus_index_folder].style = ""
-        global_focus_index_folder = (global_focus_index_folder - 1) % len(
-            global_lists
-        )
+        global_focus_index_folder = (global_focus_index_folder - 1) % len(global_lists)
         folder_window[global_focus_index_folder].style = COLOR_FOLDER
     else:
         global global_focus_index_task
@@ -152,7 +149,7 @@ def _(event):
     """
     Select currently focused folder
     """
-    if global_focus_on_folder:
+    if global_is_focus_on_folder:
         load_tasks()
 
 
@@ -162,13 +159,13 @@ def _(event):
     Go back to folder scroll mode
     """
     global global_focus_index_task
-    global global_focus_on_folder
+    global global_is_focus_on_folder
     global right_window
 
     if global_tasks_ui:
         global_tasks_ui[global_focus_index_task].style = ""
     right_window.children = [Window()]
-    global_focus_on_folder = True
+    global_is_focus_on_folder = True
 
 
 @kb.add("c")
@@ -178,7 +175,9 @@ def _(event):
     """
 
     # Only receive input on task view mode
-    if global_focus_on_folder or (not global_focus_on_folder and not global_tasks_ui):
+    if global_is_focus_on_folder or (
+        not global_is_focus_on_folder and not global_tasks_ui
+    ):
         return
 
     global global_waiting_confirmation
@@ -229,7 +228,7 @@ def _(event):
     global_waiting_confirmation = True
 
     # Check if we are creating new task or folder
-    if global_focus_on_folder:
+    if global_is_focus_on_folder:
         # We are creating a new folder
         input_field = TextArea(
             height=1,
@@ -317,7 +316,7 @@ def load_tasks():
     Load tasks of currently focused folder
     """
 
-    global global_focus_on_folder
+    global global_is_focus_on_folder
     global global_focus_index_task
     global global_tasks_ui
     global global_tasks
@@ -327,7 +326,20 @@ def load_tasks():
 
     global_tasks_ui = []
     for idx, t in enumerate(global_tasks):
-        global_tasks_ui.append(Window(FormattedTextControl(t.title), height=1))
+        # global_tasks_ui.append(Window(FormattedTextControl(t.title), height=1))
+        _task_ui = VSplit(
+            [
+                Window(FormattedTextControl(t.title), wrap_lines=True, height=3),
+                Window(width=5),
+                Window(
+                    FormattedTextControl(
+                        f"Created: {t.created_datetime}\nReminder: {t.reminder_datetime}"
+                    ),
+                    width=30,
+                ),
+            ],
+        )
+        global_tasks_ui.append(_task_ui)
 
     # Add empty container if task list is empty
     if not global_tasks_ui:
@@ -336,7 +348,7 @@ def load_tasks():
         right_window.children = global_tasks_ui
         global_focus_index_task = 0
         global_tasks_ui[global_focus_index_task].style = COLOR_TASK
-    global_focus_on_folder = False
+    global_is_focus_on_folder = False
 
 
 left_window = HSplit([Window()])
@@ -344,13 +356,15 @@ left_window = HSplit([Window()])
 # Get folders to load on screen
 load_folders()
 
-right_window = HSplit([Window()])
+right_window = HSplit([Window()], align=VerticalAlign.TOP, padding=1)
 body = VSplit(
     [
         left_window,
         Window(width=1, char="|", style="class:line"),
         right_window,
-    ]
+    ],
+    padding=1,
+    # align=HorizontalAlign.JUSTIFY,
 )
 
 prompt_window = Window(

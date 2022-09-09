@@ -185,7 +185,7 @@ def api_timestamp_to_datetime(api_dt: Union[str, dict]):
 
     dt = datetime.strptime(api_dt_str_mod, "%Y-%m-%dT%H:%M:%S.%f")
     dt = utc_to_local(dt)
-    return dt
+    return f"{dt:%Y-%m-%d %H:%M}"
 
 
 def utc_to_local(_dt):
