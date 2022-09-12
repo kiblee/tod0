@@ -13,7 +13,6 @@ from prompt_toolkit.layout.containers import (
     Window,
     WindowAlign,
     DynamicContainer,
-    HorizontalAlign,
     VerticalAlign,
 )
 from prompt_toolkit.layout.controls import FormattedTextControl
@@ -38,6 +37,9 @@ global_waiting_confirmation = False
 global_lists = []
 global_tasks_ui = []
 global_tasks = []
+
+# Num tasks to display for pagination
+NUM_TASKS_PER_PAGE = 10
 
 
 def load_folders():
@@ -116,9 +118,26 @@ def _(event):
         global global_focus_index_task
         if global_tasks_ui:
             global_tasks_ui[global_focus_index_task].style = ""
-            global_focus_index_task = (global_focus_index_task + 1) % len(
-                global_tasks_ui
-            )
+
+            # If we're at end of task list
+            if global_focus_index_task == len(global_tasks_ui) - 1:
+                # Do nothing
+                pass
+            # If we're at end of paginated page
+            elif global_focus_index_task % NUM_TASKS_PER_PAGE == NUM_TASKS_PER_PAGE - 1:
+                # Load next paginated page
+                global_focus_index_task += 1
+                page_tasks = global_tasks_ui[
+                    global_focus_index_task : global_focus_index_task
+                    + NUM_TASKS_PER_PAGE
+                ]
+                right_window.children = page_tasks
+            # We're in the middle of paginated page
+            else:
+                # Go down one row
+                global_focus_index_task += 1
+
+            # Highlight correct task
             global_tasks_ui[global_focus_index_task].style = COLOR_TASK
 
 
@@ -138,9 +157,26 @@ def _(event):
         global global_focus_index_task
         if global_tasks_ui:
             global_tasks_ui[global_focus_index_task].style = ""
-            global_focus_index_task = (global_focus_index_task - 1) % len(
-                global_tasks_ui
-            )
+
+            # If we're at start of task list
+            if global_focus_index_task == 0:
+                # Do nothing
+                pass
+            # If we're at start of paginated page
+            elif global_focus_index_task % NUM_TASKS_PER_PAGE == 0:
+                # Load previous paginated page
+                page_tasks = global_tasks_ui[
+                    global_focus_index_task
+                    - NUM_TASKS_PER_PAGE : global_focus_index_task
+                ]
+                global_focus_index_task -= 1
+                right_window.children = page_tasks
+            # If we're in the middle of paginated page
+            else:
+                # Go up one row
+                global_focus_index_task -= 1
+
+            # Highlight correct task
             global_tasks_ui[global_focus_index_task].style = COLOR_TASK
 
 
@@ -329,7 +365,7 @@ def load_tasks():
         # global_tasks_ui.append(Window(FormattedTextControl(t.title), height=1))
         _task_ui = VSplit(
             [
-                Window(FormattedTextControl(t.title), wrap_lines=True, height=3),
+                Window(FormattedTextControl(t.title), wrap_lines=True, height=2),
                 Window(width=5),
                 Window(
                     FormattedTextControl(
@@ -345,7 +381,7 @@ def load_tasks():
     if not global_tasks_ui:
         right_window.children = [Window(FormattedTextControl("-- No Tasks --"))]
     else:
-        right_window.children = global_tasks_ui
+        right_window.children = global_tasks_ui[0:NUM_TASKS_PER_PAGE]
         global_focus_index_task = 0
         global_tasks_ui[global_focus_index_task].style = COLOR_TASK
     global_is_focus_on_folder = False
@@ -364,7 +400,6 @@ body = VSplit(
         right_window,
     ],
     padding=1,
-    # align=HorizontalAlign.JUSTIFY,
 )
 
 prompt_window = Window(
@@ -381,7 +416,6 @@ root_container = HSplit(
         ),
         # Horizontal separator.
         Window(height=1, char="-", style="class:line"),
-        # The 'body', like defined above.
         body,
         Window(height=1, char=".", style="class:line"),
         DynamicContainer(lambda: prompt_window),
