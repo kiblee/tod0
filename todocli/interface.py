@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import (
     KeyBindings,
@@ -22,421 +20,393 @@ from prompt_toolkit.widgets import TextArea
 import todocli.graphapi.wrapper as wrapper
 from todocli.utils import update_checker
 
-# Colors
-COLOR_FOLDER = "bg:#006699"
-COLOR_TASK = "bg:#006699"
 
-global_focus_index_folder = 0
-global_focus_index_task = 0
-global_is_focus_on_folder = True
-
-# This flag is used to direct user input to confirmation prompt
-global_waiting_confirmation = False
-
-# Global data structures for ui
-global_lists = []
-global_tasks_ui = []
-global_tasks = []
-
-# Num tasks to display for pagination
-NUM_TASKS_PER_PAGE = 10
-
-
-def load_folders():
+class Tod0GUI:
     """
-    Load all folders
-    """
-    global left_window
-    global global_focus_index_folder
-    global global_lists
-
-    # Reset all folder data structures
-    global_focus_index_folder = 0
-
-    # Retrieve folder data
-    global_lists = wrapper.get_lists()
-
-    # Layout interface
-    left_window.children = [
-        Window(FormattedTextControl(f.display_name), width=50) for f in global_lists
-    ]
-
-    # Highlight first folder
-    left_window.children[0].style = COLOR_FOLDER
-
-
-# Key bindings
-kb = KeyBindings()
-kb_exit = KeyBindings()
-kb_escape = KeyBindings()
-
-
-@kb_exit.add("c-c", eager=True)
-@kb_exit.add("c-q", eager=True)
-def _(event):
-    """
-    Pressing Ctrl-Q or Ctrl-C will exit the user interface.
-    """
-    event.app.exit()
-
-
-@kb.add("?")
-def _(event):
-    """
-    Pressing Shift-? will display help toolbar.
-    """
-    global global_waiting_confirmation
-    global prompt_window
-
-    global_waiting_confirmation = True
-
-    input_field = TextArea(
-        height=1,
-        prompt="[UP: j] [DOWN: k] [SELECT: l] [BACK: h] [CREATE: n] [MARK COMPLETE: c] [EXIT HELP: ESC]",
-        style="class:output-field",
-        multiline=False,
-        wrap_lines=False,
-    )
-
-    prompt_window = input_field
-    event.app.layout.focus(input_field)
-
-
-@kb.add("j")
-def _(event):
-    """
-    Move selection down 1
+    GUI for tod0 that runs in the terminal.
     """
 
-    if global_is_focus_on_folder:
-        global global_focus_index_folder
-        folder_window = left_window.children
-        folder_window[global_focus_index_folder].style = ""
-        global_focus_index_folder = (global_focus_index_folder + 1) % len(global_lists)
-        folder_window[global_focus_index_folder].style = COLOR_FOLDER
-    else:
-        global global_focus_index_task
-        if global_tasks_ui:
-            global_tasks_ui[global_focus_index_task].style = ""
+    # Colors
+    COLOR_LIST = "bg:#006699"
+    COLOR_TASK = "bg:#006699"
 
-            # If we're at end of task list
-            if global_focus_index_task == len(global_tasks_ui) - 1:
-                # Do nothing
-                pass
-            # If we're at end of paginated page
-            elif global_focus_index_task % NUM_TASKS_PER_PAGE == NUM_TASKS_PER_PAGE - 1:
-                # Load next paginated page
-                global_focus_index_task += 1
-                page_tasks = global_tasks_ui[
-                    global_focus_index_task : global_focus_index_task
-                    + NUM_TASKS_PER_PAGE
-                ]
-                right_window.children = page_tasks
-            # We're in the middle of paginated page
-            else:
-                # Go down one row
-                global_focus_index_task += 1
+    # Num tasks to display for pagination
+    NUM_TASKS_PER_PAGE = 10
 
-            # Highlight correct task
-            global_tasks_ui[global_focus_index_task].style = COLOR_TASK
+    # This flag is used to direct user input to confirmation prompt
+    is_waiting_prompt = False
 
+    def __init__(self):
+        # Check for updates
+        update_checker.check()
 
-@kb.add("k")
-def _(event):
-    """
-    Move selection up 1
-    """
+        # Tracking where focus is
+        self.list_focus_idx = 0
+        self.task_focus_idx = 0
+        self.is_focus_on_list = True
 
-    if global_is_focus_on_folder:
-        global global_focus_index_folder
-        folder_window = left_window.children
-        folder_window[global_focus_index_folder].style = ""
-        global_focus_index_folder = (global_focus_index_folder - 1) % len(global_lists)
-        folder_window[global_focus_index_folder].style = COLOR_FOLDER
-    else:
-        global global_focus_index_task
-        if global_tasks_ui:
-            global_tasks_ui[global_focus_index_task].style = ""
+        # Global data structures for ui
+        self.lists = []
+        self.tasks_ui = []
+        self.tasks = []
 
-            # If we're at start of task list
-            if global_focus_index_task == 0:
-                # Do nothing
-                pass
-            # If we're at start of paginated page
-            elif global_focus_index_task % NUM_TASKS_PER_PAGE == 0:
-                # Load previous paginated page
-                page_tasks = global_tasks_ui[
-                    global_focus_index_task
-                    - NUM_TASKS_PER_PAGE : global_focus_index_task
-                ]
-                global_focus_index_task -= 1
-                right_window.children = page_tasks
-            # If we're in the middle of paginated page
-            else:
-                # Go up one row
-                global_focus_index_task -= 1
+        # UI
+        self.prompt_window = Window(height=1)
+        self.left_window = Window(height=1)
+        self.right_window = Window(height=1)
 
-            # Highlight correct task
-            global_tasks_ui[global_focus_index_task].style = COLOR_TASK
-
-
-@kb.add("l")
-def _(event):
-    """
-    Select currently focused folder
-    """
-    if global_is_focus_on_folder:
-        load_tasks()
-
-
-@kb.add("h")
-def _(event):
-    """
-    Go back to folder scroll mode
-    """
-    global global_focus_index_task
-    global global_is_focus_on_folder
-    global right_window
-
-    if global_tasks_ui:
-        global_tasks_ui[global_focus_index_task].style = ""
-    right_window.children = [Window()]
-    global_is_focus_on_folder = True
-
-
-@kb.add("c")
-def _(event):
-    """
-    Mark task as complete
-    """
-
-    # Only receive input on task view mode
-    if global_is_focus_on_folder or (
-        not global_is_focus_on_folder and not global_tasks_ui
-    ):
-        return
-
-    global global_waiting_confirmation
-    global prompt_window
-    global global_tasks
-
-    global_waiting_confirmation = True
-
-    input_field = TextArea(
-        height=1,
-        prompt="Mark task as complete? <y> to confirm. ",
-        style="class:input-field",
-        multiline=False,
-        wrap_lines=False,
-    )
-
-    # Confirmation of commands
-    def confirm(buff):
-        global global_waiting_confirmation
-        global prompt_window
-        user_input = input_field.text
-        if user_input == "y":
-            # Mark task as complete
-            wrapper.complete_task(
-                list_id=global_lists[global_focus_index_folder].id,
-                task_id=global_tasks[global_focus_index_task].id,
-            )
-            load_tasks()
-
-        # Return to normal state
-        global_waiting_confirmation = False
-        prompt_window = Window()
-
-    input_field.accept_handler = confirm
-
-    prompt_window = input_field
-    event.app.layout.focus(input_field)
-
-
-@kb.add("n")
-def _(event):
-    """
-    Create new task/folder
-    """
-    global global_waiting_confirmation
-    global prompt_window
-
-    global_waiting_confirmation = True
-
-    # Check if we are creating new task or folder
-    if global_is_focus_on_folder:
-        # We are creating a new folder
-        input_field = TextArea(
-            height=1,
-            prompt="New folder: ",
-            style="class:input-field",
-            multiline=False,
-            wrap_lines=False,
+        # Creating an `Application` instance
+        self.application = Application(
+            layout=self.create_layout(),
+            key_bindings=merge_key_bindings(self.get_key_bindings()),
+            mouse_support=False,
+            full_screen=False,
         )
 
-        # Get new folder name
-        def get_name(buff):
-            global global_waiting_confirmation
-            global prompt_window
-            global left_window
+        self.application.run()
 
-            user_input = input_field.text
-            if user_input:
-                # Create new folder
-                wrapper.create_list(user_input)
-                # Refresh folders
-                load_folders()
+    def create_layout(self):
+        self.left_window = HSplit([Window()])
 
-            # Return to normal state
-            global_waiting_confirmation = False
-            prompt_window = Window()
+        # Get folders to load on screen
+        self.load_lists()
 
-    else:
-        # We are creating a new task
-        input_field = TextArea(
-            height=1,
-            prompt="New task: ",
-            style="class:input-field",
-            multiline=False,
-            wrap_lines=False,
-        )
-
-        # Get new task name
-        def get_name(buff):
-            global global_waiting_confirmation
-            global prompt_window
-            user_input = input_field.text
-
-            if user_input:
-                # Create new task
-                wrapper.create_task(
-                    user_input, list_id=global_lists[global_focus_index_folder].id
-                )
-                # Refresh tasks
-                load_tasks()
-
-            # Return to normal state
-            global_waiting_confirmation = False
-            prompt_window = Window()
-
-    input_field.accept_handler = get_name
-
-    prompt_window = input_field
-    event.app.layout.focus(input_field)
-
-
-@kb_escape.add("escape", eager=True)
-def _(event):
-    """
-    Escape prompt
-    """
-    global global_waiting_confirmation
-    global prompt_window
-
-    # Return to normal state
-    global_waiting_confirmation = False
-    prompt_window = Window()
-
-
-@Condition
-def is_not_waiting_for_confirmation():
-    "Enable key bindings when not waiting for confirmation"
-    return not global_waiting_confirmation
-
-
-kb = ConditionalKeyBindings(kb, is_not_waiting_for_confirmation)
-
-
-def load_tasks():
-    """
-    Load tasks of currently focused folder
-    """
-
-    global global_is_focus_on_folder
-    global global_focus_index_task
-    global global_tasks_ui
-    global global_tasks
-
-    selected_list = global_lists[global_focus_index_folder]
-    global_tasks = wrapper.get_tasks(list_id=selected_list.id, num_tasks=100)
-
-    global_tasks_ui = []
-    for idx, t in enumerate(global_tasks):
-        # global_tasks_ui.append(Window(FormattedTextControl(t.title), height=1))
-        _task_ui = VSplit(
+        self.right_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
+        body = VSplit(
             [
-                Window(FormattedTextControl(t.title), wrap_lines=True, height=2),
-                Window(width=5),
-                Window(
-                    FormattedTextControl(
-                        f"Created: {t.created_datetime}\nReminder: {t.reminder_datetime}"
-                    ),
-                    width=30,
-                ),
+                self.left_window,
+                Window(width=1, char="|", style="class:line"),
+                self.right_window,
             ],
+            padding=1,
         )
-        global_tasks_ui.append(_task_ui)
 
-    # Add empty container if task list is empty
-    if not global_tasks_ui:
-        right_window.children = [Window(FormattedTextControl("-- No Tasks --"))]
-    else:
-        right_window.children = global_tasks_ui[0:NUM_TASKS_PER_PAGE]
-        global_focus_index_task = 0
-        global_tasks_ui[global_focus_index_task].style = COLOR_TASK
-    global_is_focus_on_folder = False
+        self.prompt_window = Window(
+            height=1, content=FormattedTextControl(""), align=WindowAlign.LEFT
+        )
+
+        root_container = HSplit(
+            [
+                # The titlebar.
+                Window(
+                    height=1,
+                    content=FormattedTextControl([("class:title", " tod0 ")]),
+                    align=WindowAlign.CENTER,
+                ),
+                # Horizontal separator.
+                Window(height=1, char="-", style="class:line"),
+                body,
+                Window(height=1, char=".", style="class:line"),
+                DynamicContainer(lambda: self.prompt_window),
+            ]
+        )
+
+        return Layout(root_container)
+
+    def load_lists(self):
+        """
+        Load all lists
+        """
+
+        # Reset all folder data structures
+        self.list_focus_idx = 0
+
+        # Retrieve folder data
+        self.lists = wrapper.get_lists()
+
+        # Layout interface
+        self.left_window.children = [
+            Window(FormattedTextControl(f.display_name), width=50) for f in self.lists
+        ]
+
+        # Highlight first folder
+        self.left_window.children[0].style = Tod0GUI.COLOR_LIST
+
+    def load_tasks(self):
+        """
+        Load tasks of currently focused folder
+        """
+
+        selected_list = self.lists[self.list_focus_idx]
+        self.tasks = wrapper.get_tasks(list_id=selected_list.id, num_tasks=100)
+
+        self.tasks_ui = []
+        for idx, t in enumerate(self.tasks):
+            # global_tasks_ui.append(Window(FormattedTextControl(t.title), height=1))
+            _task_ui = VSplit(
+                [
+                    Window(FormattedTextControl(t.title), wrap_lines=True, height=2),
+                    Window(width=5),
+                    Window(
+                        FormattedTextControl(
+                            f"Created: {t.created_datetime}\nReminder: {t.reminder_datetime}"
+                        ),
+                        width=30,
+                    ),
+                ],
+            )
+            self.tasks_ui.append(_task_ui)
+
+        # Add empty container if task list is empty
+        if not self.tasks_ui:
+            self.right_window.children = [
+                Window(FormattedTextControl("-- No Tasks --"))
+            ]
+        else:
+            self.right_window.children = self.tasks_ui[0 : Tod0GUI.NUM_TASKS_PER_PAGE]
+            self.task_focus_idx = 0
+            self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
+        self.is_focus_on_list = False
+
+    """
+    Key Bindings
+    """
+
+    def get_key_bindings(self):
+        # Key bindings
+        kb = KeyBindings()
+        kb_exit = KeyBindings()
+        kb_escape = KeyBindings()
+
+        @kb_exit.add("c-c", eager=True)
+        @kb_exit.add("c-q", eager=True)
+        def _(event):
+            """
+            Pressing Ctrl-Q or Ctrl-C will exit the user interface.
+            """
+            event.app.exit()
+
+        @kb.add("?")
+        def _(event):
+            """
+            Pressing Shift-? will display help toolbar.
+            """
+            Tod0GUI.is_waiting_prompt = True
+
+            input_field = TextArea(
+                height=1,
+                prompt="[UP: j] [DOWN: k] [SELECT: l] [BACK: h] [CREATE: n] [MARK COMPLETE: c] [EXIT HELP: ESC]",
+                style="class:output-field",
+                multiline=False,
+                wrap_lines=False,
+            )
+
+            self.prompt_window = input_field
+            event.app.layout.focus(input_field)
+
+        @kb.add("j")
+        def _(event):
+            """
+            Move selection down 1
+            """
+            if self.is_focus_on_list:
+                list_window = self.left_window.children
+                list_window[self.list_focus_idx].style = ""
+                self.list_focus_idx = (self.list_focus_idx + 1) % len(self.lists)
+                list_window[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
+            else:
+                if self.tasks_ui:
+                    self.tasks_ui[self.task_focus_idx].style = ""
+
+                    # If we're at end of task list
+                    if self.task_focus_idx == len(self.tasks_ui) - 1:
+                        # Do nothing
+                        pass
+                    # If we're at end of paginated page
+                    elif (
+                        self.task_focus_idx % Tod0GUI.NUM_TASKS_PER_PAGE
+                        == Tod0GUI.NUM_TASKS_PER_PAGE - 1
+                    ):
+                        # Load next paginated page
+                        self.task_focus_idx += 1
+                        page_tasks = self.tasks_ui[
+                            self.task_focus_idx : self.task_focus_idx
+                            + Tod0GUI.NUM_TASKS_PER_PAGE
+                        ]
+                        self.right_window.children = page_tasks
+                    # We're in the middle of paginated page
+                    else:
+                        # Go down one row
+                        self.task_focus_idx += 1
+
+                    # Highlight correct task
+                    self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
+
+        @kb.add("k")
+        def _(event):
+            """
+            Move selection up 1
+            """
+
+            if self.is_focus_on_list:
+                list_window = self.left_window.children
+                list_window[self.list_focus_idx].style = ""
+                self.list_focus_idx = (self.list_focus_idx - 1) % len(self.lists)
+                list_window[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
+            else:
+                if self.tasks_ui:
+                    self.tasks_ui[self.task_focus_idx].style = ""
+
+                    # If we're at start of task list
+                    if self.task_focus_idx == 0:
+                        # Do nothing
+                        pass
+                    # If we're at start of paginated page
+                    elif self.task_focus_idx % Tod0GUI.NUM_TASKS_PER_PAGE == 0:
+                        # Load previous paginated page
+                        page_tasks = self.tasks_ui[
+                            self.task_focus_idx
+                            - Tod0GUI.NUM_TASKS_PER_PAGE : self.task_focus_idx
+                        ]
+                        self.task_focus_idx -= 1
+                        self.right_window.children = page_tasks
+                    # If we're in the middle of paginated page
+                    else:
+                        # Go up one row
+                        self.task_focus_idx -= 1
+
+                    # Highlight correct task
+                    self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
+
+        @kb.add("l")
+        def _(event):
+            """
+            Select currently focused list
+            """
+            if self.is_focus_on_list:
+                self.load_tasks()
+
+        @kb.add("h")
+        def _(event):
+            """
+            Go back to list scroll mode
+            """
+            if self.tasks_ui:
+                self.tasks_ui[self.task_focus_idx].style = ""
+            self.right_window.children = [Window()]
+            self.is_focus_on_list = True
+
+        @kb.add("c")
+        def _(event):
+            """
+            Mark task as complete
+            """
+
+            # Only receive input on task view mode
+            if self.is_focus_on_list or (
+                not self.is_focus_on_list and not self.tasks_ui
+            ):
+                return
+
+            Tod0GUI.is_waiting_prompt = True
+
+            input_field = TextArea(
+                height=1,
+                prompt="Mark task as complete? <y> to confirm. ",
+                style="class:input-field",
+                multiline=False,
+                wrap_lines=False,
+            )
+
+            # Confirmation of commands
+            def confirm(buff):
+                user_input = input_field.text
+                if user_input == "y":
+                    # Mark task as complete
+                    wrapper.complete_task(
+                        list_id=self.lists[self.list_focus_idx].id,
+                        task_id=self.tasks[self.task_focus_idx].id,
+                    )
+                    self.load_tasks()
+
+                # Return to normal state
+                Tod0GUI.is_waiting_prompt = False
+                self.prompt_window = Window()
+
+            input_field.accept_handler = confirm
+
+            self.prompt_window = input_field
+            event.app.layout.focus(input_field)
+
+        @kb.add("n")
+        def _(event):
+            """
+            Create new task/list
+            """
+            Tod0GUI.is_waiting_prompt = True
+
+            # Check if we are creating new task or list
+            if self.is_focus_on_list:
+                # We are creating a new list
+                input_field = TextArea(
+                    height=1,
+                    prompt="New list: ",
+                    style="class:input-field",
+                    multiline=False,
+                    wrap_lines=False,
+                )
+
+                # Get new list name
+                def get_name(buff):
+                    user_input = input_field.text
+                    if user_input:
+                        # Create new list
+                        wrapper.create_list(user_input)
+                        # Refresh lists
+                        self.load_lists()
+
+                    # Return to normal state
+                    Tod0GUI.is_waiting_prompt = False
+                    self.prompt_window = Window()
+
+            else:
+                # We are creating a new task
+                input_field = TextArea(
+                    height=1,
+                    prompt="New task: ",
+                    style="class:input-field",
+                    multiline=False,
+                    wrap_lines=False,
+                )
+
+                # Get new task name
+                def get_name(buff):
+                    user_input = input_field.text
+                    if user_input:
+                        # Create new task
+                        wrapper.create_task(
+                            user_input, list_id=self.lists[self.list_focus_idx].id
+                        )
+                        # Refresh tasks
+                        self.load_tasks()
+
+                    # Return to normal state
+                    Tod0GUI.is_waiting_prompt = False
+                    self.prompt_window = Window()
+
+            input_field.accept_handler = get_name
+
+            self.prompt_window = input_field
+            event.app.layout.focus(input_field)
+
+        @kb_escape.add("escape", eager=True)
+        def _(event):
+            """
+            Escape prompt
+            """
+            # Return to normal state
+            Tod0GUI.is_waiting_prompt = False
+            self.prompt_window = Window()
+
+        @Condition
+        def is_not_waiting_for_confirmation():
+            "Enable key bindings when not waiting for confirmation"
+            return not Tod0GUI.is_waiting_prompt
+
+        kb = ConditionalKeyBindings(kb, is_not_waiting_for_confirmation)
+
+        return (kb, kb_exit, kb_escape)
 
 
-left_window = HSplit([Window()])
-
-# Get folders to load on screen
-load_folders()
-
-right_window = HSplit([Window()], align=VerticalAlign.TOP, padding=1)
-body = VSplit(
-    [
-        left_window,
-        Window(width=1, char="|", style="class:line"),
-        right_window,
-    ],
-    padding=1,
-)
-
-prompt_window = Window(
-    height=1, content=FormattedTextControl(""), align=WindowAlign.LEFT
-)
-
-root_container = HSplit(
-    [
-        # The titlebar.
-        Window(
-            height=1,
-            content=FormattedTextControl([("class:title", " tod0 ")]),
-            align=WindowAlign.CENTER,
-        ),
-        # Horizontal separator.
-        Window(height=1, char="-", style="class:line"),
-        body,
-        Window(height=1, char=".", style="class:line"),
-        DynamicContainer(lambda: prompt_window),
-    ]
-)
-
-# Creating an `Application` instance
-# ----------------------------------
-application = Application(
-    layout=Layout(root_container),
-    key_bindings=merge_key_bindings([kb, kb_exit, kb_escape]),
-    mouse_support=False,
-    full_screen=False,
-)
-
-# Run the application
-# -------------------
 def run():
-    application.run()
-
-
-if __name__ == "__main__":
-    update_checker()
-    run()
+    Tod0GUI()
