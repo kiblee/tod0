@@ -12,11 +12,12 @@ setup(
     license="LICENSE",
     description="A Terminal Client for Microsoft To-Do.",
     install_requires=[
-        "prompt-toolkit",
+        "prompt-toolkit>=3.0.31",
         "pyyaml",
-        "requests",
+        "requests>=2.28.1",
         "requests_oauthlib",
         "bs4",
+        "yaspin>=2.2.0",
     ],
     include_package_data=True,
     entry_points="""

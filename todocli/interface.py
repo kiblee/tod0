@@ -1,3 +1,5 @@
+from yaspin import yaspin
+
 from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import (
     KeyBindings,
@@ -51,9 +53,20 @@ class Tod0GUI:
         self.tasks = []
 
         # UI
-        self.prompt_window = Window(height=1)
-        self.left_window = Window(height=1)
-        self.right_window = Window(height=1)
+        self.DEFAULT_PROMPT_WINDOW = TextArea(
+            height=1,
+            prompt="",
+            style="class:input-field",
+            multiline=False,
+            wrap_lines=False,
+        )
+
+        self.prompt_window = self.DEFAULT_PROMPT_WINDOW
+        self.left_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
+        self.right_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
+
+        # Load lists
+        self.load_lists()
 
         # Creating an `Application` instance
         self.application = Application(
@@ -66,12 +79,6 @@ class Tod0GUI:
         self.application.run()
 
     def create_layout(self):
-        self.left_window = HSplit([Window()])
-
-        # Get folders to load on screen
-        self.load_lists()
-
-        self.right_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
         body = VSplit(
             [
                 self.left_window,
@@ -81,13 +88,10 @@ class Tod0GUI:
             padding=1,
         )
 
-        self.prompt_window = Window(
-            height=1, content=FormattedTextControl(""), align=WindowAlign.LEFT
-        )
-
         root_container = HSplit(
             [
                 # The titlebar.
+                DynamicContainer(lambda: self.prompt_window),
                 Window(
                     height=1,
                     content=FormattedTextControl([("class:title", " tod0 ")]),
@@ -97,7 +101,6 @@ class Tod0GUI:
                 Window(height=1, char="-", style="class:line"),
                 body,
                 Window(height=1, char=".", style="class:line"),
-                DynamicContainer(lambda: self.prompt_window),
             ]
         )
 
@@ -112,7 +115,8 @@ class Tod0GUI:
         self.list_focus_idx = 0
 
         # Retrieve folder data
-        self.lists = wrapper.get_lists()
+        with yaspin(text="Loading lists") as sp:
+            self.lists = wrapper.get_lists()
 
         # Layout interface
         self.left_window.children = [
@@ -120,7 +124,7 @@ class Tod0GUI:
         ]
 
         # Highlight first folder
-        self.left_window.children[0].style = Tod0GUI.COLOR_LIST
+        self.left_window.children[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
 
     def load_tasks(self):
         """
@@ -128,11 +132,12 @@ class Tod0GUI:
         """
 
         selected_list = self.lists[self.list_focus_idx]
-        self.tasks = wrapper.get_tasks(list_id=selected_list.id, num_tasks=100)
 
-        self.tasks_ui = []
+        with yaspin(text="Loading tasks") as sp:
+            self.tasks = wrapper.get_tasks(list_id=selected_list.id, num_tasks=100)
+
+        self.tasks_ui.clear()
         for idx, t in enumerate(self.tasks):
-            # global_tasks_ui.append(Window(FormattedTextControl(t.title), height=1))
             _task_ui = VSplit(
                 [
                     Window(FormattedTextControl(t.title), wrap_lines=True, height=2),
@@ -153,10 +158,17 @@ class Tod0GUI:
                 Window(FormattedTextControl("-- No Tasks --"))
             ]
         else:
-            self.right_window.children = self.tasks_ui[0 : Tod0GUI.NUM_TASKS_PER_PAGE]
+            self.right_window.children = [
+                t for t in self.tasks_ui[0 : Tod0GUI.NUM_TASKS_PER_PAGE]
+            ]
             self.task_focus_idx = 0
             self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
         self.is_focus_on_list = False
+
+    def reset_prompt_window(self):
+        self.prompt_window = self.DEFAULT_PROMPT_WINDOW
+        self.application.layout.focus(self.prompt_window)
+        Tod0GUI.is_waiting_prompt = False
 
     """
     Key Bindings
@@ -281,8 +293,6 @@ class Tod0GUI:
             """
             Go back to list scroll mode
             """
-            if self.tasks_ui:
-                self.tasks_ui[self.task_focus_idx].style = ""
             self.right_window.children = [Window()]
             self.is_focus_on_list = True
 
@@ -313,15 +323,18 @@ class Tod0GUI:
                 user_input = input_field.text
                 if user_input == "y":
                     # Mark task as complete
-                    wrapper.complete_task(
-                        list_id=self.lists[self.list_focus_idx].id,
-                        task_id=self.tasks[self.task_focus_idx].id,
-                    )
+                    with yaspin(text="Marking as complete") as sp:
+                        wrapper.complete_task(
+                            list_id=self.lists[self.list_focus_idx].id,
+                            task_id=self.tasks[self.task_focus_idx].id,
+                        )
+
                     self.load_tasks()
+                    # self.refresh_layout()
 
                 # Return to normal state
                 Tod0GUI.is_waiting_prompt = False
-                self.prompt_window = Window()
+                self.reset_prompt_window()
 
             input_field.accept_handler = confirm
 
@@ -351,13 +364,13 @@ class Tod0GUI:
                     user_input = input_field.text
                     if user_input:
                         # Create new list
-                        wrapper.create_list(user_input)
+                        with yaspin(text="Creating new list") as sp:
+                            wrapper.create_list(user_input)
                         # Refresh lists
                         self.load_lists()
 
                     # Return to normal state
-                    Tod0GUI.is_waiting_prompt = False
-                    self.prompt_window = Window()
+                    self.reset_prompt_window()
 
             else:
                 # We are creating a new task
@@ -374,15 +387,15 @@ class Tod0GUI:
                     user_input = input_field.text
                     if user_input:
                         # Create new task
-                        wrapper.create_task(
-                            user_input, list_id=self.lists[self.list_focus_idx].id
-                        )
+                        with yaspin(text="Creating new task") as sp:
+                            wrapper.create_task(
+                                user_input, list_id=self.lists[self.list_focus_idx].id
+                            )
                         # Refresh tasks
                         self.load_tasks()
 
                     # Return to normal state
-                    Tod0GUI.is_waiting_prompt = False
-                    self.prompt_window = Window()
+                    self.reset_prompt_window()
 
             input_field.accept_handler = get_name
 
@@ -395,8 +408,7 @@ class Tod0GUI:
             Escape prompt
             """
             # Return to normal state
-            Tod0GUI.is_waiting_prompt = False
-            self.prompt_window = Window()
+            self.reset_prompt_window()
 
         @Condition
         def is_not_waiting_for_confirmation():
