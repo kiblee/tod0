@@ -19,7 +19,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.widgets import TextArea
 
-import todocli.graphapi.wrapper as wrapper
+from todocli.graphapi import wrapper, oauth
 from todocli.utils import update_checker
 
 
@@ -41,6 +41,9 @@ class Tod0GUI:
     def __init__(self):
         # Check for updates
         update_checker.check()
+
+        # Check if user is authenticated
+        oauth.get_token()
 
         # Tracking where focus is
         self.list_focus_idx = 0
