@@ -59,7 +59,7 @@ def add_day_if_past(dt: datetime) -> datetime:
 
 def parse_datetime(datetime_str: str):
     try:
-        if match := re.match(r"(?:(\d+)/(\d+)/)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?", datetime_str, re.IGNORECASE) if datetime_str else None:
+        if match := re.match(r"(?:(\d+)/(\d+)/)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?", datetime_str, re.IGNORECASE):
             """e.g. 1h / 12h"""
             multiplier = 1
             if match.group(1):
