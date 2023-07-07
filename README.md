@@ -100,10 +100,9 @@ Usage:
     Specifying time:
         For options which take 'time' as a parameter, 'time' can be one of the following:
         
-        {n}h
-            Current time + n hours. 
-            e.g. 1h, 12h. 
-            Max: 99h
+        {days}d{hours}h{minutes}m{seconds}s
+            Current time + specified time delta. 
+            e.g. 1h, 12h, 1h30m
             
         morning
             Today at 07:00 AM if current time < 07:00 AM, otherwise tomorrow
@@ -131,6 +130,11 @@ Usage:
             The given day at 7:00 am
             e.g. 22.12.2020
             e.g. 01.01.21
+
+        {start_value}/{end_value}/{time_delta}
+            Calculate the finish time according specified start/end values.
+            e.g. 0/100/1m -> 100 minutes
+            e.g. 15/35/17s -> 340 seconds
     
 Features
 --------
