@@ -94,7 +94,9 @@ def setup_parser():
     parser = argparse.ArgumentParser(
         description="Command line interface for Microsoft ToDo"
     )
-    parser.add_argument("-i", "--interactive", action="store_true", help="Interactive mode")
+    parser.add_argument(
+        "-i", "--interactive", action="store_true", help="Interactive mode"
+    )
     parser.set_defaults(func=None)
     subparsers = parser.add_subparsers(help="Command to execute")
 
@@ -143,7 +145,6 @@ def main():
         parser = setup_parser()
         first_run = True
         interactive = False
-        
 
         while True:
             try:
