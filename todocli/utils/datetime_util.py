@@ -60,7 +60,7 @@ def add_day_if_past(dt: datetime) -> datetime:
 def parse_datetime(datetime_str: str):
     try:
         if match := re.match(
-            r"(?:(\d+)/(\d+)/)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?",
+            r"(?:(\d+)/(\d+)/)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?$",
             datetime_str,
             re.IGNORECASE,
         ):
