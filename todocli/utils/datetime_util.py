@@ -59,9 +59,14 @@ def add_day_if_past(dt: datetime) -> datetime:
 
 def parse_datetime(datetime_str: str):
     try:
-        if re.match(r"([0-9]{1,2}h)", datetime_str, re.IGNORECASE):
+        if match := re.match(r"(\d+d)?(\d+h)?(\d+m)?(\d+s)?", datetime_str, re.IGNORECASE) if datetime_str else None:
             """e.g. 1h / 12h"""
-            return datetime.now() + timedelta(hours=int(datetime_str[:-1]))
+            return datetime.now() + timedelta(
+                days=0 if match.group(1) is None else int(match.group(1)[:-1]),
+                hours=0 if match.group(2) is None else int(match.group(2)[:-1]),
+                minutes=0 if match.group(3) is None else int(match.group(3)[:-1]),
+                seconds=0 if match.group(4) is None else int(match.group(4)[:-1]),
+            )
 
         if datetime_str == "morning":
             dt = datetime.now()
