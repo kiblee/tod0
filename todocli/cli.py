@@ -3,7 +3,7 @@ import shlex
 import sys
 
 import todocli.graphapi.wrapper as wrapper
-from todocli.utils import update_checker
+from todocli.utils.update_checker import check as update_checker
 from todocli.utils.datetime_util import (
     parse_datetime,
     TimeExpressionNotRecognized,
