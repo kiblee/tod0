@@ -4,4 +4,4 @@ PyYAML==5.4
 bs4
 yaspin
 
-setuptools~=49.2.1
+setuptools~=65.5.1
