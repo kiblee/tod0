@@ -100,15 +100,15 @@ class TestDatetimeParser(unittest.TestCase):
         ]
 
         for time in invalid_times:
-            print(f"testing time: {time}")
-            try:
-                self.assertRaises(Exception, parse_datetime(time))
-            except ErrorParsingTime:
-                pass
-            except TimeExpressionNotRecognized:
-                pass
-            else:
-                raise
+            with self.subTest(f"testing time: {time}"):
+                try:
+                    self.assertRaises(Exception, parse_datetime(time))
+                except ErrorParsingTime:
+                    pass
+                except TimeExpressionNotRecognized:
+                    pass
+                else:
+                    raise
 
 
 if __name__ == "__main__":
