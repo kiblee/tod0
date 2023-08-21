@@ -139,7 +139,11 @@ class Tod0GUI:
 
         with yaspin(text="Loading tasks") as sp:
             self.tasks = wrapper.get_tasks(list_id=selected_list.id, num_tasks=100)
-            self.tasks.sort( key=lambda x: x.reminder_datetime or x.due_datetime or x.created_datetime)
+            self.tasks.sort(
+                key=lambda x: x.reminder_datetime
+                or x.due_datetime
+                or x.created_datetime
+            )
 
         self.tasks_ui.clear()
         for idx, t in enumerate(self.tasks):
@@ -148,9 +152,7 @@ class Tod0GUI:
                     Window(FormattedTextControl(t.title), wrap_lines=True, height=2),
                     Window(width=5),
                     Window(
-                        FormattedTextControl(
-                            f"Reminder: {t.reminder_datetime}"
-                        ),
+                        FormattedTextControl(f"Reminder: {t.reminder_datetime}"),
                         width=30,
                     ),
                 ],
@@ -197,6 +199,7 @@ class Tod0GUI:
                 multiline=False,
                 wrap_lines=False,
             )
+
             def handler(_):
                 self.reset_prompt_window()
                 result.append(input_field.text)
@@ -208,7 +211,6 @@ class Tod0GUI:
             self.application.layout.focus(input_field)
 
         loop()
-
 
     """
     Key Bindings
@@ -396,6 +398,7 @@ class Tod0GUI:
                             wrapper.create_list(user_input)
                         # Refresh lists
                         self.load_lists()
+
                 self.prompt("New list: ", callback=get_name)
 
             else:
@@ -410,7 +413,9 @@ class Tod0GUI:
                         wrapper.create_task(
                             task_name=name,
                             list_id=self.lists[self.list_focus_idx].id,
-                            reminder_datetime=None if not reminder else parse_datetime(reminder),
+                            reminder_datetime=None
+                            if not reminder
+                            else parse_datetime(reminder),
                         )
                     # Refresh tasks
                     self.load_tasks()

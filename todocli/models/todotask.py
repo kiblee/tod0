@@ -36,9 +36,7 @@ class Task:
         self.is_reminder_on: bool = bool(query_result["isReminderOn"])
 
         if "dueDateTime" in query_result:
-            self.due_datetime = api_timestamp_to_datetime(
-                query_result["dueDateTime"]
-            )
+            self.due_datetime = api_timestamp_to_datetime(query_result["dueDateTime"])
         else:
             self.due_datetime = None
 
