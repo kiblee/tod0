@@ -1,3 +1,4 @@
+from todocli.utils.datetime_util import parse_datetime
 from yaspin import yaspin
 
 from prompt_toolkit.application import Application
@@ -138,6 +139,7 @@ class Tod0GUI:
 
         with yaspin(text="Loading tasks") as sp:
             self.tasks = wrapper.get_tasks(list_id=selected_list.id, num_tasks=100)
+            self.tasks.sort( key=lambda x: x.reminder_datetime or x.due_datetime or x.created_datetime)
 
         self.tasks_ui.clear()
         for idx, t in enumerate(self.tasks):
@@ -147,7 +149,7 @@ class Tod0GUI:
                     Window(width=5),
                     Window(
                         FormattedTextControl(
-                            f"Created: {t.created_datetime}\nReminder: {t.reminder_datetime}"
+                            f"Reminder: {t.reminder_datetime}"
                         ),
                         width=30,
                     ),
@@ -172,6 +174,41 @@ class Tod0GUI:
         self.prompt_window = self.DEFAULT_PROMPT_WINDOW
         self.application.layout.focus(self.prompt_window)
         Tod0GUI.is_waiting_prompt = False
+
+    def prompt(self, *messages, callback=None):
+        messages_list = [*messages]
+
+        if not callable(callback):
+            raise ValueError("callback must be a function")
+
+        result = []
+
+        def loop():
+            if not messages_list:
+                callback(*result)
+                return
+
+            Tod0GUI.is_waiting_prompt = True
+
+            input_field = TextArea(
+                height=1,
+                prompt=messages_list.pop(0),
+                style="class:input-field",
+                multiline=False,
+                wrap_lines=False,
+            )
+            def handler(_):
+                self.reset_prompt_window()
+                result.append(input_field.text)
+                loop()
+
+            input_field.accept_handler = handler
+
+            self.prompt_window = input_field
+            self.application.layout.focus(input_field)
+
+        loop()
+
 
     """
     Key Bindings
@@ -349,61 +386,36 @@ class Tod0GUI:
             """
             Create new task/list
             """
-            Tod0GUI.is_waiting_prompt = True
-
             # Check if we are creating new task or list
             if self.is_focus_on_list:
                 # We are creating a new list
-                input_field = TextArea(
-                    height=1,
-                    prompt="New list: ",
-                    style="class:input-field",
-                    multiline=False,
-                    wrap_lines=False,
-                )
-
-                # Get new list name
-                def get_name(buff):
-                    user_input = input_field.text
+                def get_name(user_input):
                     if user_input:
                         # Create new list
                         with yaspin(text="Creating new list") as sp:
                             wrapper.create_list(user_input)
                         # Refresh lists
                         self.load_lists()
-
-                    # Return to normal state
-                    self.reset_prompt_window()
+                self.prompt("New list: ", callback=get_name)
 
             else:
                 # We are creating a new task
-                input_field = TextArea(
-                    height=1,
-                    prompt="New task: ",
-                    style="class:input-field",
-                    multiline=False,
-                    wrap_lines=False,
-                )
 
-                # Get new task name
-                def get_name(buff):
-                    user_input = input_field.text
-                    if user_input:
-                        # Create new task
-                        with yaspin(text="Creating new task") as sp:
-                            wrapper.create_task(
-                                user_input, list_id=self.lists[self.list_focus_idx].id
-                            )
-                        # Refresh tasks
-                        self.load_tasks()
+                def create_task(name, reminder):
+                    if not name:
+                        return
 
-                    # Return to normal state
-                    self.reset_prompt_window()
+                    # Create new task
+                    with yaspin(text="Creating new task") as sp:
+                        wrapper.create_task(
+                            task_name=name,
+                            list_id=self.lists[self.list_focus_idx].id,
+                            reminder_datetime=reminder and parse_datetime(reminder),
+                        )
+                    # Refresh tasks
+                    self.load_tasks()
 
-            input_field.accept_handler = get_name
-
-            self.prompt_window = input_field
-            event.app.layout.focus(input_field)
+                self.prompt("New task: ", "Reminder (optional): ", callback=create_task)
 
         @kb_escape.add("escape", eager=True)
         def _(event):
