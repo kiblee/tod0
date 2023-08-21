@@ -410,7 +410,7 @@ class Tod0GUI:
                         wrapper.create_task(
                             task_name=name,
                             list_id=self.lists[self.list_focus_idx].id,
-                            reminder_datetime=reminder and parse_datetime(reminder),
+                            reminder_datetime=None if not reminder else parse_datetime(reminder),
                         )
                     # Refresh tasks
                     self.load_tasks()
