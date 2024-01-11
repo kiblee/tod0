@@ -84,9 +84,9 @@ def get_tasks(list_name: str = None, list_id: str = None, num_tasks: int = 100):
 
 def create_task(
     task_name: str,
-    list_name: str = None,
-    list_id: str = None,
-    reminder_datetime: datetime = None,
+    list_name: str | None = None,
+    list_id: str | None = None,
+    reminder_datetime: datetime | None = None,
 ):
     assert (list_name is not None) or (
         list_id is not None

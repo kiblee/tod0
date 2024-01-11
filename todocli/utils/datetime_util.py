@@ -172,7 +172,7 @@ def parse_datetime(datetime_str: str):
     raise TimeExpressionNotRecognized(datetime_str)
 
 
-def datetime_to_api_timestamp(dt: datetime):
+def datetime_to_api_timestamp(dt: datetime | None):
     if dt is None:
         return None
 
