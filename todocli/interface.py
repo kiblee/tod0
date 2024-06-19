@@ -167,10 +167,12 @@ class Tod0GUI:
                 Window(FormattedTextControl("-- No Tasks --"))
             ]
         else:
+            if self.task_focus_idx >= len(self.tasks_ui):
+                self.task_focus_idx = 0
+            page = self.task_focus_idx // Tod0GUI.NUM_TASKS_PER_PAGE
             self.right_window.children = [
-                t for t in self.tasks_ui[0 : Tod0GUI.NUM_TASKS_PER_PAGE]
+                t for t in self.tasks_ui[page * Tod0GUI.NUM_TASKS_PER_PAGE : (page + 1) * Tod0GUI.NUM_TASKS_PER_PAGE]
             ]
-            self.task_focus_idx = 0
             self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
         self.is_focus_on_list = False
 
