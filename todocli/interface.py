@@ -168,7 +168,7 @@ class Tod0GUI:
             ]
         else:
             if self.task_focus_idx >= len(self.tasks_ui):
-                self.task_focus_idx = 0
+                self.task_focus_idx = len(self.tasks_ui) - 1
             page = self.task_focus_idx // Tod0GUI.NUM_TASKS_PER_PAGE
             self.right_window.children = [
                 t for t in self.tasks_ui[page * Tod0GUI.NUM_TASKS_PER_PAGE : (page + 1) * Tod0GUI.NUM_TASKS_PER_PAGE]
