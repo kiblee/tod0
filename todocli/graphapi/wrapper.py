@@ -2,6 +2,7 @@
 For implementation details, refer to this source:
 https://docs.microsoft.com/en-us/graph/api/resources/todo-overview?view=graph-rest-1.0
 """
+
 import json
 from datetime import datetime
 from typing import Union

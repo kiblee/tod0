@@ -171,7 +171,12 @@ class Tod0GUI:
                 self.task_focus_idx = len(self.tasks_ui) - 1
             page = self.task_focus_idx // Tod0GUI.NUM_TASKS_PER_PAGE
             self.right_window.children = [
-                t for t in self.tasks_ui[page * Tod0GUI.NUM_TASKS_PER_PAGE : (page + 1) * Tod0GUI.NUM_TASKS_PER_PAGE]
+                t
+                for t in self.tasks_ui[
+                    page
+                    * Tod0GUI.NUM_TASKS_PER_PAGE : (page + 1)
+                    * Tod0GUI.NUM_TASKS_PER_PAGE
+                ]
             ]
             self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
         self.is_focus_on_list = False
@@ -417,9 +422,9 @@ class Tod0GUI:
                         wrapper.create_task(
                             task_name=name,
                             list_id=self.lists[self.list_focus_idx].id,
-                            reminder_datetime=None
-                            if not reminder
-                            else parse_datetime(reminder),
+                            reminder_datetime=(
+                                None if not reminder else parse_datetime(reminder)
+                            ),
                         )
                     # Refresh tasks
                     self.load_tasks()
