@@ -1,3 +1,5 @@
+import sys
+
 from todocli.utils.datetime_util import parse_datetime
 from yaspin import yaspin
 
@@ -79,6 +81,10 @@ class Tod0GUI:
             mouse_support=False,
             full_screen=False,
         )
+
+        # disable paste on win32
+        if sys.platform == "win32":
+            self.application.input.console_input_reader.recognize_paste = False
 
         self.application.run()
 
