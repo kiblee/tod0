@@ -101,7 +101,13 @@ class Tod0GUI:
         root_container = HSplit(
             [
                 # The titlebar.
-                DynamicContainer(lambda: self.prompt_window if self.is_waiting_prompt else Window(height=1)),
+                DynamicContainer(
+                    lambda: (
+                        self.prompt_window
+                        if self.is_waiting_prompt
+                        else Window(height=1)
+                    )
+                ),
                 Window(
                     height=1,
                     content=FormattedTextControl([("class:title", " tod0 ")]),
