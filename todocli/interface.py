@@ -152,9 +152,7 @@ class Tod0GUI:
                     Window(FormattedTextControl(t.title), wrap_lines=True, height=2),
                     Window(width=5),
                     Window(
-                        FormattedTextControl(
-                            f"Created: {t.created_datetime}\nReminder: {t.reminder_datetime}"
-                        ),
+                        FormattedTextControl(f"Reminder: {t.reminder_datetime}"),
                         width=30,
                     ),
                 ],
@@ -183,7 +181,7 @@ class Tod0GUI:
 
     def reset_prompt_window(self):
         self.prompt_window = self.DEFAULT_PROMPT_WINDOW
-        self.application.layout.focus(self.prompt_window)
+        # self.application.layout.focus(self.prompt_window)
         Tod0GUI.is_waiting_prompt = False
 
     def prompt(self, *messages, callback=None):
