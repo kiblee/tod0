@@ -1,7 +1,12 @@
+import asyncio
+from os import access
+import sys
+
 from todocli.utils.datetime_util import parse_datetime
 from yaspin import yaspin
 
 from prompt_toolkit.application import Application
+from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.key_binding import (
     KeyBindings,
     ConditionalKeyBindings,
@@ -16,7 +21,8 @@ from prompt_toolkit.layout.containers import (
     DynamicContainer,
     VerticalAlign,
 )
-from prompt_toolkit.layout.controls import FormattedTextControl
+from prompt_toolkit.layout.controls import FormattedTextControl, BufferControl, DummyControl
+from prompt_toolkit.layout.processors import BeforeInput
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.widgets import TextArea
 
@@ -34,10 +40,10 @@ class Tod0GUI:
     COLOR_TASK = "bg:#006699"
 
     # Num tasks to display for pagination
-    NUM_TASKS_PER_PAGE = 10
+    # NUM_TASKS_PER_PAGE = 10
 
     # This flag is used to direct user input to confirmation prompt
-    is_waiting_prompt = False
+    # is_waiting_prompt = False
 
     def __init__(self):
         # Check for updates
@@ -49,7 +55,7 @@ class Tod0GUI:
         # Tracking where focus is
         self.list_focus_idx = 0
         self.task_focus_idx = 0
-        self.is_focus_on_list = True
+        # self.is_focus_on_list = True
 
         # Global data structures for ui
         self.lists = []
@@ -57,17 +63,18 @@ class Tod0GUI:
         self.tasks = []
 
         # UI
-        self.DEFAULT_PROMPT_WINDOW = TextArea(
-            height=1,
-            prompt="",
-            style="class:input-field",
-            multiline=False,
-            wrap_lines=False,
-        )
+        # self.DEFAULT_PROMPT_WINDOW = TextArea(
+        #     height=1,
+        #     prompt="",
+        #     style="class:input-field",
+        #     multiline=False,
+        #     wrap_lines=False,
+        # )
 
-        self.prompt_window = self.DEFAULT_PROMPT_WINDOW
-        self.left_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
-        self.right_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
+        # self.prompt_window = self.DEFAULT_PROMPT_WINDOW
+        self.left_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0, key_bindings=self.get_left_kb())
+        self.right_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0, key_bindings=self.get_right_kb())
+        self.status_bar = Window(height=1, style="class:line")
 
         # Load lists
         self.load_lists()
@@ -75,10 +82,16 @@ class Tod0GUI:
         # Creating an `Application` instance
         self.application = Application(
             layout=self.create_layout(),
-            key_bindings=merge_key_bindings(self.get_key_bindings()),
+            key_bindings=self.get_global_kb(),
             mouse_support=False,
-            full_screen=False,
+            full_screen=True,
         )
+
+        self.application.layout.focus(self.left_window.children[self.list_focus_idx])
+
+        # disable paste on win32
+        if sys.platform == "win32":
+            self.application.input.console_input_reader.recognize_paste = False
 
         self.application.run()
 
@@ -94,8 +107,7 @@ class Tod0GUI:
 
         root_container = HSplit(
             [
-                # The titlebar.
-                DynamicContainer(lambda: self.prompt_window),
+                self.status_bar,
                 Window(
                     height=1,
                     content=FormattedTextControl([("class:title", " tod0 ")]),
@@ -116,7 +128,7 @@ class Tod0GUI:
         """
 
         # Reset all folder data structures
-        self.list_focus_idx = 0
+        # self.list_focus_idx = 0
 
         # Retrieve folder data
         with yaspin(text="Loading lists") as sp:
@@ -126,6 +138,9 @@ class Tod0GUI:
         self.left_window.children = [
             Window(FormattedTextControl(f.display_name), width=50) for f in self.lists
         ]
+
+        if self.list_focus_idx >= len(self.lists):
+            self.list_focus_idx = len(self.lists) - 1
 
         # Highlight first folder
         self.left_window.children[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
@@ -180,11 +195,15 @@ class Tod0GUI:
         self.is_focus_on_list = False
 
     def reset_prompt_window(self):
-        self.prompt_window = self.DEFAULT_PROMPT_WINDOW
-        # self.application.layout.focus(self.prompt_window)
-        Tod0GUI.is_waiting_prompt = False
+        self.status_bar.content = DummyControl()
+        self.application.layout.focus_last()
 
-    def prompt(self, *messages, callback=None):
+    def prompt_async(self, message):
+        f = asyncio.Future()
+        self.prompt(message, callback=f.set_result, callback_err=f.set_exception)
+        return f
+
+    def prompt(self, *messages, callback=None, callback_err=None):
         messages_list = [*messages]
 
         if not callable(callback):
@@ -197,25 +216,24 @@ class Tod0GUI:
                 callback(*result)
                 return
 
-            Tod0GUI.is_waiting_prompt = True
-
-            input_field = TextArea(
-                height=1,
-                prompt=messages_list.pop(0),
-                style="class:input-field",
-                multiline=False,
-                wrap_lines=False,
-            )
-
             def handler(_):
                 self.reset_prompt_window()
                 result.append(input_field.text)
                 loop()
+            buffer = Buffer(multiline=False, accept_handler=handler)
 
-            input_field.accept_handler = handler
+            kb = KeyBindings()
+            @kb.add("escape", eager=True)
+            def _(event):
+                self.reset_prompt_window()
+                if callable(callback_err):
+                    callback_err(TypeError("User cancelled input"))
+            control = BufferControl(buffer=buffer, key_bindings=kb, input_processors=[
+                BeforeInput(messages_list.pop(0), style="class:text-area.prompt")
+                ])
 
-            self.prompt_window = input_field
-            self.application.layout.focus(input_field)
+            self.status_bar.content = control
+            self.application.layout.focus(buffer)
 
         loop()
 
@@ -223,14 +241,11 @@ class Tod0GUI:
     Key Bindings
     """
 
-    def get_key_bindings(self):
-        # Key bindings
+    def get_global_kb(self):
         kb = KeyBindings()
-        kb_exit = KeyBindings()
-        kb_escape = KeyBindings()
 
-        @kb_exit.add("c-c", eager=True)
-        @kb_exit.add("c-q", eager=True)
+        @kb.add("c-c", eager=True)
+        @kb.add("c-q", eager=True)
         def _(event):
             """
             Pressing Ctrl-Q or Ctrl-C will exit the user interface.
@@ -242,18 +257,60 @@ class Tod0GUI:
             """
             Pressing Shift-? will display help toolbar.
             """
-            Tod0GUI.is_waiting_prompt = True
-
-            input_field = TextArea(
-                height=1,
-                prompt="[UP: j] [DOWN: k] [SELECT: l] [BACK: h] [CREATE: n] [MARK COMPLETE: c] [EXIT HELP: ESC]",
-                style="class:output-field",
-                multiline=False,
-                wrap_lines=False,
+            self.status_bar.content = FormattedTextControl(
+                "[UP: j] [DOWN: k] [SELECT: l] [BACK: h] [CREATE: n] [MARK COMPLETE: c] [EXIT HELP: ESC]"
             )
 
-            self.prompt_window = input_field
-            event.app.layout.focus(input_field)
+        return kb
+
+    def get_left_kb(self):
+        kb = KeyBindings()
+
+        @kb.add("n")
+        def _(event):
+            """
+            Create new list
+            """
+            async def _():
+                try:
+                    name = await self.prompt_async("New list: ")
+                except TypeError:
+                    return
+                with yaspin(text="Creating new list") as sp:
+                    wrapper.create_list(name)
+                # Refresh lists
+                self.load_lists()
+            asyncio.create_task(_())
+
+        return kb
+
+    def get_right_kb(self):
+        kb = KeyBindings()
+
+        def create_task(name, reminder):
+            if not name:
+                return
+
+            # Create new task
+            with yaspin(text="Creating new task") as sp:
+                wrapper.create_task(
+                    task_name=name,
+                    list_id=self.lists[self.list_focus_idx].id,
+                    reminder_datetime=(
+                        None if not reminder else parse_datetime(reminder)
+                    ),
+                )
+            # Refresh tasks
+            self.load_tasks()
+
+        # self.prompt("New task: ", "Reminder (optional): ", callback=create_task)
+        return kb
+
+    def get_key_bindings(self):
+        # Key bindings
+        kb = KeyBindings()
+        kb_escape = KeyBindings()
+
 
         @kb.add("j")
         def _(event):
@@ -390,44 +447,6 @@ class Tod0GUI:
             self.prompt_window = input_field
             event.app.layout.focus(input_field)
 
-        @kb.add("n")
-        def _(event):
-            """
-            Create new task/list
-            """
-            # Check if we are creating new task or list
-            if self.is_focus_on_list:
-                # We are creating a new list
-                def get_name(user_input):
-                    if user_input:
-                        # Create new list
-                        with yaspin(text="Creating new list") as sp:
-                            wrapper.create_list(user_input)
-                        # Refresh lists
-                        self.load_lists()
-
-                self.prompt("New list: ", callback=get_name)
-
-            else:
-                # We are creating a new task
-
-                def create_task(name, reminder):
-                    if not name:
-                        return
-
-                    # Create new task
-                    with yaspin(text="Creating new task") as sp:
-                        wrapper.create_task(
-                            task_name=name,
-                            list_id=self.lists[self.list_focus_idx].id,
-                            reminder_datetime=(
-                                None if not reminder else parse_datetime(reminder)
-                            ),
-                        )
-                    # Refresh tasks
-                    self.load_tasks()
-
-                self.prompt("New task: ", "Reminder (optional): ", callback=create_task)
 
         @kb_escape.add("escape", eager=True)
         def _(event):
