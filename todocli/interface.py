@@ -124,6 +124,7 @@ class Tod0GUI:
 
     async def spinner(self, message, callback):
         self.status_bar.content = FormattedTextControl()
+        self.application.layout.focus(self.status_bar)
         chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
         task = asyncio.create_task(asyncio.to_thread(callback))
         i = 0
@@ -423,63 +424,57 @@ class Tod0GUI:
             move_cursor(-1)
 
         @kb.add("c")
-        def _(event):
+        async def _(event):
             """
             Mark task as complete
             """
             if not self.tasks:
                 return
 
-            async def _():
-                try:
-                    confirmation = await self.prompt_async(
-                        "Mark task as complete? <y> to confirm. "
-                    )
-                except TypeError:
-                    return
-                if confirmation != "y":
-                    return
+            try:
+                confirmation = await self.prompt_async(
+                    "Mark task as complete? <y> to confirm. "
+                )
+            except TypeError:
+                return
+            if confirmation != "y":
+                return
 
-                def complete_task():
-                    wrapper.complete_task(
-                        list_id=self.lists[self.list_focus_idx].id,
-                        task_id=self.tasks[self.task_focus_idx].id,
-                    )
+            def complete_task():
+                wrapper.complete_task(
+                    list_id=self.lists[self.list_focus_idx].id,
+                    task_id=self.tasks[self.task_focus_idx].id,
+                )
 
-                await self.spinner("Marking task as complete", complete_task)
-                await self.load_tasks()
-
-            asyncio.create_task(_())
+            await self.spinner("Marking task as complete", complete_task)
+            await self.load_tasks()
 
         @kb.add("d")
-        def _(event):
+        async def _(event):
             """
             Delete currently focused task
             """
             if not self.tasks:
                 return
 
-            async def _():
-                task_title = self.tasks[self.task_focus_idx].title
-                try:
-                    confirmation = await self.prompt_async(
-                        f"Delete task {task_title!r}? <y> to confirm. "
-                    )
-                except TypeError:
-                    return
-                if confirmation != "y":
-                    return
+            task_title = self.tasks[self.task_focus_idx].title
+            try:
+                confirmation = await self.prompt_async(
+                    f"Delete task {task_title!r}? <y> to confirm. "
+                )
+            except TypeError:
+                return
+            if confirmation != "y":
+                return
 
-                def delete_task():
-                    wrapper.delete_task(
-                        list_id=self.lists[self.list_focus_idx].id,
-                        task_id=self.tasks[self.task_focus_idx].id,
-                    )
+            def delete_task():
+                wrapper.delete_task(
+                    list_id=self.lists[self.list_focus_idx].id,
+                    task_id=self.tasks[self.task_focus_idx].id,
+                )
 
-                await self.spinner("Deleting task", delete_task)
-                await self.load_tasks()
-
-            asyncio.create_task(_())
+            await self.spinner("Deleting task", delete_task)
+            await self.load_tasks()
 
         return kb
 
