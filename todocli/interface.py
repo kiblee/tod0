@@ -123,6 +123,7 @@ class Tod0GUI:
         return Layout(root_container)
 
     async def spinner(self, message, callback):
+        last_focused = self.application.layout.current_window
         self.status_bar.content = FormattedTextControl()
         self.application.layout.focus(self.status_bar)
         chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
@@ -134,7 +135,11 @@ class Tod0GUI:
             i = (i + 1) % len(chars)
             await asyncio.wait([task], timeout=0.05)
         self.status_bar.content = DummyControl()
-        return task.result()
+        try:
+            return task.result()
+        finally:
+            self.application.layout.focus(last_focused)
+
 
     async def load_lists(self):
         """
