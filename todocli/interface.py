@@ -1,12 +1,15 @@
 import asyncio
 from os import access
 import sys
+import logging
+from contextlib import contextmanager
 
 from todocli.utils.datetime_util import parse_datetime
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.key_binding import KeyBindings, merge_key_bindings
+from prompt_toolkit.key_binding.key_processor import _Flush
 
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.layout import ScrollablePane
@@ -29,6 +32,9 @@ from prompt_toolkit.styles import Style
 from todocli.graphapi import wrapper, oauth
 from todocli.utils import update_checker
 
+logger = logging.getLogger(__name__)
+
+# logging.basicConfig(filename="tod0.log", level=logging.DEBUG)
 
 class Tod0GUI:
     """
@@ -88,7 +94,39 @@ class Tod0GUI:
         if sys.platform == "win32":
             self.application.input.console_input_reader.recognize_paste = False
 
+        self.application.key_processor.before_key_press += lambda e: logger.debug("before key press")
+        self.application.key_processor.after_key_press += lambda e: logger.debug("after key press. next key: %s", e.input_queue and e.input_queue[0])
+
+        self.in_typeahead = False
+        self.typeahead_buffer = []
+        self.application._default_bindings = merge_key_bindings( [
+                self.get_default_kb(),
+                self.application._default_bindings,
+                ])
+
+    @contextmanager
+    def typeahead_collect(self):
+        self.in_typeahead = True
+        try:
+            yield
+        finally:
+            self.in_typeahead = False
+
+    def typeahead_flush(self):
+        if not self.typeahead_buffer:
+            return
+        for event in self.typeahead_buffer:
+            self.application.key_processor.feed_multiple(event.key_sequence)
+        self.typeahead_buffer.clear()
+
+        self.application.key_processor.feed(_Flush)
+        self.application.key_processor.process_keys()
+
     async def run(self):
+        try:
+            asyncio.get_running_loop().set_task_factory(asyncio.eager_task_factory)
+        except AttributeError:
+            pass
         async def init():
             await self.load_lists()
             self.application.invalidate()
@@ -207,19 +245,23 @@ class Tod0GUI:
 
     def reset_prompt_window(self):
         self.status_bar.content = DummyControl()
-        self.application.layout.focus_last()
+        # self.application.layout.focus_last()
 
-    async def prompt_async(self, message):
+    async def prompt_async(self, *messages, keep_focus=True):
         last_focused = self.application.layout.current_window
         try:
-            return await self._prompt_async(message)
+            return await self._prompt_async(*messages)
         finally:
             # FIXME: what if the window is removed?
-            self.application.layout.focus(last_focused)
+            if keep_focus:
+                self.application.layout.focus(last_focused)
 
-    def _prompt_async(self, message):
+    def _prompt_async(self, *messages):
         f = asyncio.Future()
-        self.prompt(message, callback=f.set_result, callback_err=f.set_exception)
+        try:
+            self.prompt(*messages, callback=f.set_result, callback_err=f.set_exception)
+        except Exception as e:
+            f.set_exception(e)
         return f
 
     def prompt(self, *messages, callback=None, callback_err=None):
@@ -236,6 +278,7 @@ class Tod0GUI:
                 return
 
             def handler(_):
+                logger.debug("prompt handler")
                 result.append(buffer.text)
                 self.reset_prompt_window()
                 loop()
@@ -260,13 +303,25 @@ class Tod0GUI:
 
             self.status_bar.content = control
             self.application.layout.focus(buffer)
+            logger.debug("prompt focus")
             self.application.invalidate()
+            self.typeahead_flush()
 
         loop()
 
     """
     Key Bindings
     """
+
+    def get_default_kb(self):
+        kb = KeyBindings()
+
+        @kb.add("<any>", filter=Condition(lambda: self.in_typeahead))
+        def _(event):
+            logger.debug("typeahead: %s", event.key_sequence)
+            self.typeahead_buffer.append(event)
+
+        return kb
 
     def get_global_kb(self):
         kb = KeyBindings()
@@ -278,15 +333,6 @@ class Tod0GUI:
             Pressing Ctrl-Q or Ctrl-C will exit the user interface.
             """
             event.app.exit()
-
-        @kb.add("?")
-        def _(event):
-            """
-            Pressing Shift-? will display help toolbar.
-            """
-            self.status_bar.content = FormattedTextControl(
-                "[UP: j] [DOWN: k] [SELECT: l] [BACK: h] [CREATE: n] [MARK COMPLETE: c] [EXIT HELP: ESC]"
-            )
 
         return kb
 
@@ -357,6 +403,15 @@ class Tod0GUI:
             """
             await self.load_tasks()
 
+        @kb.add("?")
+        def _(event):
+            """
+            Pressing Shift-? will display help toolbar.
+            """
+            self.status_bar.content = FormattedTextControl(
+                "[UP: j] [DOWN: k] [SELECT: l] [CREATE: n] [DELETE: d]"
+            )
+
         return kb
 
     def get_right_kb(self):
@@ -367,18 +422,21 @@ class Tod0GUI:
             """
             Create new task
             """
-            try:
-                name = await self.prompt_async("New task: ")
-            except TypeError:
-                return
-            if not name:
-                return
+            logger.debug("ask new task name")
+            with self.typeahead_collect():
+                try:
+                    name = await self.prompt_async("New task: ")
+                except TypeError:
+                    return
+                if not name:
+                    return
 
             reminder = None
+            logger.debug("ask new task reminder")
             try:
                 reminder = await self.prompt_async("Reminder (optional): ")
             except TypeError:
-                pass
+                return
 
             def create_task():
                 wrapper.create_task(
@@ -397,6 +455,7 @@ class Tod0GUI:
             """
             Go back to list scroll mode
             """
+            logger.debug("back to list")
             self.right_window.children = []
             self.application.layout.focus(
                 self.left_window.children[self.list_focus_idx]
@@ -480,6 +539,15 @@ class Tod0GUI:
 
             await self.spinner("Deleting task", delete_task)
             await self.load_tasks()
+
+        @kb.add("?")
+        def _(event):
+            """
+            Pressing Shift-? will display help toolbar.
+            """
+            self.status_bar.content = FormattedTextControl(
+                "[UP: j] [DOWN: k] [BACK: h] [CREATE: n] [MARK COMPLETE: c] [DELETE: d]"
+            )
 
         return kb
 
