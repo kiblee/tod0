@@ -34,7 +34,9 @@ from todocli.utils import update_checker
 
 logger = logging.getLogger(__name__)
 
-# logging.basicConfig(filename="tod0.log", level=logging.DEBUG)
+import os
+if os.environ.get("DEBUG"):
+    logging.basicConfig(filename="tod0.log", level=logging.DEBUG)
 
 class Tod0GUI:
     """
@@ -105,12 +107,17 @@ class Tod0GUI:
                 ])
 
     @contextmanager
-    def typeahead_collect(self):
-        self.in_typeahead = True
+    def typeahead(self, flush_at_leave=False):
+        self.typeahead_collect()
         try:
             yield
         finally:
             self.in_typeahead = False
+            if flush_at_leave:
+                self.typeahead_flush()
+
+    def typeahead_collect(self):
+        self.in_typeahead = True
 
     def typeahead_flush(self):
         if not self.typeahead_buffer:
@@ -119,8 +126,13 @@ class Tod0GUI:
             self.application.key_processor.feed_multiple(event.key_sequence)
         self.typeahead_buffer.clear()
 
-        self.application.key_processor.feed(_Flush)
-        self.application.key_processor.process_keys()
+        logger.debug("flush typeahead")
+        # FIXME: calling process_keys immediately breaks flush_at_leave?
+        def flush(event):
+            self.application.after_render -= flush
+            self.application.key_processor.process_keys()
+        self.application.after_render += flush
+        # asyncio.get_running_loop().call_later(0.1, self.application.key_processor.process_keys)
 
     async def run(self):
         try:
@@ -245,6 +257,7 @@ class Tod0GUI:
 
     def reset_prompt_window(self):
         self.status_bar.content = DummyControl()
+        self.typeahead_collect()
         # self.application.layout.focus_last()
 
     async def prompt_async(self, *messages, keep_focus=True):
@@ -316,6 +329,7 @@ class Tod0GUI:
     def get_default_kb(self):
         kb = KeyBindings()
 
+        # collect unhandled keys
         @kb.add("<any>", filter=Condition(lambda: self.in_typeahead))
         def _(event):
             logger.debug("typeahead: %s", event.key_sequence)
@@ -344,34 +358,37 @@ class Tod0GUI:
             """
             Create new list
             """
-            try:
-                name = await self.prompt_async("New list: ")
-            except TypeError:
-                return
-            await self.spinner("Creating new list", lambda: wrapper.create_list(name))
-            await self.load_lists()
+            with self.typeahead(flush_at_leave=True):
+                try:
+                    name = await self.prompt_async("New list: ")
+                except TypeError:
+                    return
+                await self.spinner("Creating new list", lambda: wrapper.create_list(name))
+                await self.load_lists()
 
         @kb.add("d")
         async def _(event):
             """
             Delete currently focused list
             """
-            list_title = self.lists[self.list_focus_idx].display_name
-            try:
-                confirmation = await self.prompt_async(
-                    f"Delete list {list_title!r}? <y> to confirm. "
+            with self.typeahead(flush_at_leave=True):
+                list_title = self.lists[self.list_focus_idx].display_name
+                try:
+                    confirmation = await self.prompt_async(
+                        f"Delete list {list_title!r}? <y> to confirm. "
+                    )
+                except TypeError:
+                    return
+                if confirmation != "y":
+                    return
+                await self.spinner(
+                    "Deleting list",
+                    lambda: wrapper.delete_list(self.lists[self.list_focus_idx].id),
                 )
-            except TypeError:
-                return
-            if confirmation != "y":
-                return
-            await self.spinner(
-                "Deleting list",
-                lambda: wrapper.delete_list(self.lists[self.list_focus_idx].id),
-            )
-            await self.load_lists()
+                await self.load_lists()
 
         def move_cursor(offset):
+            logger.debug("move cursor: %s", offset)
             list_window = self.left_window.children
             if not list_window:
                 return
@@ -401,7 +418,8 @@ class Tod0GUI:
             """
             Load tasks of currently focused folder
             """
-            await self.load_tasks()
+            with self.typeahead(flush_at_leave=True):
+                await self.load_tasks()
 
         @kb.add("?")
         def _(event):
@@ -423,7 +441,7 @@ class Tod0GUI:
             Create new task
             """
             logger.debug("ask new task name")
-            with self.typeahead_collect():
+            with self.typeahead():
                 try:
                     name = await self.prompt_async("New task: ")
                 except TypeError:
@@ -431,24 +449,25 @@ class Tod0GUI:
                 if not name:
                     return
 
-            reminder = None
-            logger.debug("ask new task reminder")
-            try:
-                reminder = await self.prompt_async("Reminder (optional): ")
-            except TypeError:
-                return
+            with self.typeahead(flush_at_leave=True):
+                reminder = None
+                logger.debug("ask new task reminder")
+                try:
+                    reminder = await self.prompt_async("Reminder (optional): ")
+                except TypeError:
+                    return
 
-            def create_task():
-                wrapper.create_task(
-                    task_name=name,
-                    list_id=self.lists[self.list_focus_idx].id,
-                    reminder_datetime=(
-                        None if not reminder else parse_datetime(reminder)
-                    ),
-                )
+                def create_task():
+                    wrapper.create_task(
+                        task_name=name,
+                        list_id=self.lists[self.list_focus_idx].id,
+                        reminder_datetime=(
+                            None if not reminder else parse_datetime(reminder)
+                        ),
+                    )
 
-            await self.spinner("Creating new task", create_task)
-            await self.load_tasks()
+                await self.spinner("Creating new task", create_task)
+                await self.load_tasks()
 
         @kb.add("h")
         def _(event):
@@ -492,53 +511,55 @@ class Tod0GUI:
             """
             Mark task as complete
             """
-            if not self.tasks:
-                return
+            with self.typeahead(flush_at_leave=True):
+                if not self.tasks:
+                    return
 
-            try:
-                confirmation = await self.prompt_async(
-                    "Mark task as complete? <y> to confirm. "
-                )
-            except TypeError:
-                return
-            if confirmation != "y":
-                return
+                try:
+                    confirmation = await self.prompt_async(
+                        "Mark task as complete? <y> to confirm. "
+                    )
+                except TypeError:
+                    return
+                if confirmation != "y":
+                    return
 
-            def complete_task():
-                wrapper.complete_task(
-                    list_id=self.lists[self.list_focus_idx].id,
-                    task_id=self.tasks[self.task_focus_idx].id,
-                )
+                def complete_task():
+                    wrapper.complete_task(
+                        list_id=self.lists[self.list_focus_idx].id,
+                        task_id=self.tasks[self.task_focus_idx].id,
+                    )
 
-            await self.spinner("Marking task as complete", complete_task)
-            await self.load_tasks()
+                await self.spinner("Marking task as complete", complete_task)
+                await self.load_tasks()
 
         @kb.add("d")
         async def _(event):
             """
             Delete currently focused task
             """
-            if not self.tasks:
-                return
+            with self.typeahead(flush_at_leave=True):
+                if not self.tasks:
+                    return
 
-            task_title = self.tasks[self.task_focus_idx].title
-            try:
-                confirmation = await self.prompt_async(
-                    f"Delete task {task_title!r}? <y> to confirm. "
-                )
-            except TypeError:
-                return
-            if confirmation != "y":
-                return
+                task_title = self.tasks[self.task_focus_idx].title
+                try:
+                    confirmation = await self.prompt_async(
+                        f"Delete task {task_title!r}? <y> to confirm. "
+                    )
+                except TypeError:
+                    return
+                if confirmation != "y":
+                    return
 
-            def delete_task():
-                wrapper.delete_task(
-                    list_id=self.lists[self.list_focus_idx].id,
-                    task_id=self.tasks[self.task_focus_idx].id,
-                )
+                def delete_task():
+                    wrapper.delete_task(
+                        list_id=self.lists[self.list_focus_idx].id,
+                        task_id=self.tasks[self.task_focus_idx].id,
+                    )
 
-            await self.spinner("Deleting task", delete_task)
-            await self.load_tasks()
+                await self.spinner("Deleting task", delete_task)
+                await self.load_tasks()
 
         @kb.add("?")
         def _(event):
