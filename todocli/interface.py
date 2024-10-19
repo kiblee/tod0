@@ -1,4 +1,5 @@
 import asyncio
+from datetime import timedelta
 from os import access
 import sys
 import logging
@@ -37,6 +38,14 @@ logger = logging.getLogger(__name__)
 import os
 if os.environ.get("DEBUG"):
     logging.basicConfig(filename="tod0.log", level=logging.DEBUG)
+
+def get_reminder(task):
+    d = None
+    if task.reminder_datetime:
+        d = task.reminder_datetime
+    if task.due_datetime:
+        d = task.due_datetime + timedelta(hours=7)
+    return d and d.strftime("%y/%m/%d %H:%M")
 
 class Tod0GUI:
     """
@@ -239,7 +248,7 @@ class Tod0GUI:
                     Window(FormattedTextControl(task.title), wrap_lines=True, height=2),
                     Window(width=5),
                     Window(
-                        FormattedTextControl(f"Reminder: {task.reminder_datetime}"),
+                        FormattedTextControl(f"Reminder: {get_reminder(task)}"),
                         width=30,
                     ),
                 ],
