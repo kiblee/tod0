@@ -56,6 +56,12 @@ def create_list(title: str):
     return True if response.ok else response.raise_for_status()
 
 
+def delete_list(list_id: str):
+    session = get_oauth_session()
+    response = session.delete(f"{BASE_URL}/{list_id}")
+    return True if response.ok else response.raise_for_status()
+
+
 # TODO No associated command
 def rename_list(old_title: str, new_title: str):
     list_id = get_list_id_by_name(old_title)
@@ -139,6 +145,10 @@ def complete_task(
 def remove_task(list_name: str, task_name: Union[str, int]):
     list_id = get_list_id_by_name(list_name)
     task_id = get_task_id_by_name(list_name, task_name)
+    return delete_task(list_id, task_id)
+
+
+def delete_task(list_id: str, task_id: str):
     endpoint = f"{BASE_URL}/{list_id}/tasks/{task_id}"
     session = get_oauth_session()
     response = session.delete(endpoint)
