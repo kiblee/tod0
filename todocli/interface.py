@@ -108,7 +108,7 @@ class Tod0GUI:
 
         self.prompt_window = self.DEFAULT_PROMPT_WINDOW
         self.left_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
-        self.right_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
+        self.right_window = ScrollablePane(HSplit([Window()], align=VerticalAlign.TOP, padding=0))
 
         # Load lists
         self.load_lists()
@@ -118,7 +118,7 @@ class Tod0GUI:
             layout=self.create_layout(),
             key_bindings=merge_key_bindings(self.get_key_bindings()),
             mouse_support=False,
-            full_screen=False,
+            full_screen=True,
         )
 
         self.application.run()
@@ -192,21 +192,13 @@ class Tod0GUI:
 
         # Add empty container if task list is empty
         if not self.tasks_ui:
-            self.right_window.children = [
+            self.right_window.content.children = [
                 Window(FormattedTextControl("-- No Tasks --"))
             ]
         else:
             if self.task_focus_idx >= len(self.tasks_ui):
                 self.task_focus_idx = len(self.tasks_ui) - 1
-            page = self.task_focus_idx // Tod0GUI.NUM_TASKS_PER_PAGE
-            self.right_window.children = [
-                t
-                for t in self.tasks_ui[
-                    page
-                    * Tod0GUI.NUM_TASKS_PER_PAGE : (page + 1)
-                    * Tod0GUI.NUM_TASKS_PER_PAGE
-                ]
-            ]
+            self.right_window.content.children = self.tasks_ui
             self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
         self.is_focus_on_list = False
 
@@ -286,79 +278,39 @@ class Tod0GUI:
             self.prompt_window = input_field
             event.app.layout.focus(input_field)
 
+        def move_selection(direction):
+            if self.is_focus_on_list:
+                list_window = self.left_window.children
+                list_window[self.list_focus_idx].style = ""
+                next_idx = self.list_focus_idx + direction
+                next_idx = next_idx % len(self.lists) # loop through list
+                self.list_focus_idx = next_idx
+                list_window[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
+            else:
+                if self.tasks_ui:
+                    self.tasks_ui[self.task_focus_idx].style = ""
+                    next_idx = self.task_focus_idx + direction
+                    next_idx = min(next_idx, len(self.tasks_ui) - 1)  # Don't go out of bounds
+                    next_idx = max(next_idx, 0)  # Don't go below 0
+                    self.task_focus_idx = next_idx
+                    # Highlight correct task
+                    self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
+                    self.application.layout.focus(self.tasks_ui[self.task_focus_idx].children[0].content)
+
+
         @kb.add("j")
         def _(event):
             """
             Move selection down 1
             """
-            if self.is_focus_on_list:
-                list_window = self.left_window.children
-                list_window[self.list_focus_idx].style = ""
-                self.list_focus_idx = (self.list_focus_idx + 1) % len(self.lists)
-                list_window[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
-            else:
-                if self.tasks_ui:
-                    self.tasks_ui[self.task_focus_idx].style = ""
-
-                    # If we're at end of task list
-                    if self.task_focus_idx == len(self.tasks_ui) - 1:
-                        # Do nothing
-                        pass
-                    # If we're at end of paginated page
-                    elif (
-                        self.task_focus_idx % Tod0GUI.NUM_TASKS_PER_PAGE
-                        == Tod0GUI.NUM_TASKS_PER_PAGE - 1
-                    ):
-                        # Load next paginated page
-                        self.task_focus_idx += 1
-                        page_tasks = self.tasks_ui[
-                            self.task_focus_idx : self.task_focus_idx
-                            + Tod0GUI.NUM_TASKS_PER_PAGE
-                        ]
-                        self.right_window.children = page_tasks
-                    # We're in the middle of paginated page
-                    else:
-                        # Go down one row
-                        self.task_focus_idx += 1
-
-                    # Highlight correct task
-                    self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
+            move_selection(1)
 
         @kb.add("k")
         def _(event):
             """
             Move selection up 1
             """
-
-            if self.is_focus_on_list:
-                list_window = self.left_window.children
-                list_window[self.list_focus_idx].style = ""
-                self.list_focus_idx = (self.list_focus_idx - 1) % len(self.lists)
-                list_window[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
-            else:
-                if self.tasks_ui:
-                    self.tasks_ui[self.task_focus_idx].style = ""
-
-                    # If we're at start of task list
-                    if self.task_focus_idx == 0:
-                        # Do nothing
-                        pass
-                    # If we're at start of paginated page
-                    elif self.task_focus_idx % Tod0GUI.NUM_TASKS_PER_PAGE == 0:
-                        # Load previous paginated page
-                        page_tasks = self.tasks_ui[
-                            self.task_focus_idx
-                            - Tod0GUI.NUM_TASKS_PER_PAGE : self.task_focus_idx
-                        ]
-                        self.task_focus_idx -= 1
-                        self.right_window.children = page_tasks
-                    # If we're in the middle of paginated page
-                    else:
-                        # Go up one row
-                        self.task_focus_idx -= 1
-
-                    # Highlight correct task
-                    self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
+            move_selection(-1)
 
         @kb.add("l")
         def _(event):
@@ -373,7 +325,7 @@ class Tod0GUI:
             """
             Go back to list scroll mode
             """
-            self.right_window.children = [Window()]
+            self.right_window.content.children = [Window()]
             self.is_focus_on_list = True
 
         @kb.add("c")
