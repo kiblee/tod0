@@ -27,6 +27,7 @@ from todocli.utils import update_checker
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M"
 
+
 class TaskUI(VSplit):
     def __init__(self, task):
         self.task = task
@@ -35,15 +36,19 @@ class TaskUI(VSplit):
 
         reminder_text = [
             ("", f"Created: {task.created_datetime.strftime(DATETIME_FORMAT)}"),
-            ]
+        ]
 
         reminder = task.reminder_datetime or task.due_datetime
         if reminder:
-            color = "#ff0000" if reminder and reminder < datetime.now(timezone.utc) else ""
-            reminder_text.extend([
-                ("", f"\nReminder: "),
-                (color, reminder.strftime(DATETIME_FORMAT)),
-                ])
+            color = (
+                "#ff0000" if reminder and reminder < datetime.now(timezone.utc) else ""
+            )
+            reminder_text.extend(
+                [
+                    ("", f"\nReminder: "),
+                    (color, reminder.strftime(DATETIME_FORMAT)),
+                ]
+            )
 
         super().__init__(
             [
@@ -64,6 +69,7 @@ class TaskUI(VSplit):
         else:
             self.marked = not self.marked
         self.title.text = f"{'*' if self.marked else ' '}{self.task.title}"
+
 
 class Tod0GUI:
     """
@@ -108,7 +114,9 @@ class Tod0GUI:
 
         self.prompt_window = self.DEFAULT_PROMPT_WINDOW
         self.left_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
-        self.right_window = ScrollablePane(HSplit([Window()], align=VerticalAlign.TOP, padding=0))
+        self.right_window = ScrollablePane(
+            HSplit([Window()], align=VerticalAlign.TOP, padding=0)
+        )
 
         # Load lists
         self.load_lists()
@@ -289,20 +297,23 @@ class Tod0GUI:
                 list_window = self.left_window.children
                 list_window[self.list_focus_idx].style = ""
                 next_idx = self.list_focus_idx + direction
-                next_idx = next_idx % len(self.lists) # loop through list
+                next_idx = next_idx % len(self.lists)  # loop through list
                 self.list_focus_idx = next_idx
                 list_window[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
             else:
                 if self.tasks_ui:
                     self.tasks_ui[self.task_focus_idx].style = ""
                     next_idx = self.task_focus_idx + direction
-                    next_idx = min(next_idx, len(self.tasks_ui) - 1)  # Don't go out of bounds
+                    next_idx = min(
+                        next_idx, len(self.tasks_ui) - 1
+                    )  # Don't go out of bounds
                     next_idx = max(next_idx, 0)  # Don't go below 0
                     self.task_focus_idx = next_idx
                     # Highlight correct task
                     self.tasks_ui[self.task_focus_idx].style = Tod0GUI.COLOR_TASK
-                    self.application.layout.focus(self.tasks_ui[self.task_focus_idx].children[0].content)
-
+                    self.application.layout.focus(
+                        self.tasks_ui[self.task_focus_idx].children[0].content
+                    )
 
         @kb.add("j")
         def _(event):
@@ -363,9 +374,7 @@ class Tod0GUI:
                     # Mark task as complete
                     with yaspin(text="Marking as complete") as sp:
                         # find marked tasks
-                        marked_tasks = [
-                            t for t in self.tasks_ui if t.marked
-                            ]
+                        marked_tasks = [t for t in self.tasks_ui if t.marked]
                         if not marked_tasks:
                             wrapper.complete_task(
                                 list_id=self.lists[self.list_focus_idx].id,
@@ -375,7 +384,7 @@ class Tod0GUI:
                             wrapper.complete_tasks(
                                 list_id=self.lists[self.list_focus_idx].id,
                                 task_ids=[task_ui.task.id for task_ui in marked_tasks],
-                                )
+                            )
 
                     self.load_tasks()
                     # self.refresh_layout()
