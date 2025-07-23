@@ -121,6 +121,12 @@ class Tod0GUI:
             full_screen=True,
         )
 
+        try:
+            # try disbling paste recognition
+            self.application.input.console_input_reader.recognize_paste = False
+        except AttributeError:
+            pass
+
         self.application.run()
 
     def create_layout(self):
