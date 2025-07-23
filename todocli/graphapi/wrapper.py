@@ -13,8 +13,10 @@ from todocli.graphapi.oauth import get_oauth_session
 
 from todocli.utils.datetime_util import datetime_to_api_timestamp
 
-BASE_URL = "https://graph.microsoft.com/v1.0/me/todo/lists"
-
+BASE_API = "https://graph.microsoft.com/v1.0"
+BASE_RELATE_URL = "/me/todo/lists"
+BASE_URL = f"{BASE_API}{BASE_RELATE_URL}"
+BATCH_URL = f"{BASE_API}/$batch"
 
 class ListNotFound(Exception):
     def __init__(self, list_name):
@@ -135,6 +137,26 @@ def complete_task(
     response = session.patch(endpoint, json=request_body)
     return True if response.ok else response.raise_for_status()
 
+def complete_tasks(list_id, task_ids=[]):
+    body = {
+        "requests": []
+    }
+    for task_id in task_ids:
+        body["requests"].append({
+            "id": task_id,
+            "method": "PATCH",
+            "url": f"{BASE_RELATE_URL}/{list_id}/tasks/{task_id}",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": {
+                "status": TaskStatus.COMPLETED,
+                "completedDateTime": datetime_to_api_timestamp(datetime.now())
+            }
+            })
+    session = get_oauth_session()
+    response = session.post(BATCH_URL, json=body)
+    return True if response.ok else response.raise_for_status()
 
 def remove_task(list_name: str, task_name: Union[str, int]):
     list_id = get_list_id_by_name(list_name)
