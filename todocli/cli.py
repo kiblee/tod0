@@ -145,6 +145,7 @@ def main():
         parser = setup_parser()
         first_run = True
         interactive = False
+        error_occurred = False
 
         while True:
             try:
@@ -165,16 +166,22 @@ def main():
                 pass
             except wrapper.TaskNotFoundByName as e:
                 print(e.message)
+                error_occurred = True
             except wrapper.ListNotFound as e:
                 print(e.message)
+                error_occurred = True
             except wrapper.TaskNotFoundByIndex as e:
                 print(e.message)
+                error_occurred = True
             except InvalidTaskPath as e:
                 print(e.message)
+                error_occurred = True
             except TimeExpressionNotRecognized as e:
                 print(e.message)
+                error_occurred = True
             except ErrorParsingTime as e:
                 print(e.message)
+                error_occurred = True
             finally:
                 sys.stdout.flush()
                 sys.stderr.flush()
@@ -186,6 +193,10 @@ def main():
             args = shlex.split(arg)
             sys.argv = sys.argv[:1]
             sys.argv += args
+
+        # Exit with non-zero code if an error occurred in non-interactive mode
+        if error_occurred and not interactive:
+            sys.exit(1)
 
     except KeyboardInterrupt:
         print("\n")
