@@ -20,14 +20,28 @@ class InvalidTaskPath(Exception):
         super(InvalidTaskPath, self).__init__(self.message)
 
 
-def parse_task_path(task_path):
-    if "/" in task_path:
-        elems = task_path.split("/")
+def parse_task_path(task_input, list_name=None):
+    """Parse task input into list name and task name.
+
+    Args:
+        task_input: Task identifier from user, can be 'task_name' or 'list_name/task_name'
+        list_name: Optional list name from --list flag. If provided, task_input is
+                   treated as task name only, allowing slashes in the task name.
+
+    Returns:
+        Tuple of (list_name, task_name)
+    """
+    if list_name:
+        # If list is explicitly provided via --list flag, treat entire input as task name
+        return list_name, task_input
+
+    if "/" in task_input:
+        elems = task_input.split("/")
         if len(elems) > 2:
-            raise InvalidTaskPath(task_path)
+            raise InvalidTaskPath(task_input)
         return elems[0], elems[1]
     else:
-        return "Tasks", task_path
+        return "Tasks", task_input
 
 
 def print_list(item_list):
@@ -48,7 +62,7 @@ def lst(args):
 
 
 def new(args):
-    task_list, name = parse_task_path(args.task_name)
+    task_list, name = parse_task_path(args.task_name, getattr(args, "list", None))
 
     reminder_date_time_str = args.reminder
     reminder_datetime = None
@@ -71,22 +85,24 @@ def try_parse_as_int(input_str: str):
 
 
 def complete(args):
-    task_list, name = parse_task_path(args.task_name)
+    task_list, name = parse_task_path(args.task_name, getattr(args, "list", None))
     wrapper.complete_task(list_name=task_list, task_name=try_parse_as_int(name))
 
 
 def rm(args):
-    task_list, name = parse_task_path(args.task_name)
+    task_list, name = parse_task_path(args.task_name, getattr(args, "list", None))
     wrapper.remove_task(task_list, try_parse_as_int(name))
 
 
 helptext_task_name = """
-        Specify the task to complete.
+        Specify the task.
         Can be one of the following:
         task_name
         list_name/task_name
         task_number
         list_name/task_number
+
+        Use --list flag to specify the list explicitly, allowing task names with slashes (e.g., URLs).
         """
 
 
@@ -120,6 +136,11 @@ def setup_parser():
     subparser = subparsers.add_parser("new", help="Add a new task")
     subparser.add_argument("task_name", help=helptext_task_name)
     subparser.add_argument("-r", "--reminder")
+    subparser.add_argument(
+        "-l",
+        "--list",
+        help="Specify the list name explicitly (allows task names with slashes)",
+    )
     subparser.set_defaults(func=new)
 
     # create parser for 'newl' command
@@ -130,11 +151,21 @@ def setup_parser():
     # create parser for 'complete' command
     subparser = subparsers.add_parser("complete", help="Complete a Task")
     subparser.add_argument("task_name", help=helptext_task_name)
+    subparser.add_argument(
+        "-l",
+        "--list",
+        help="Specify the list name explicitly (allows task names with slashes)",
+    )
     subparser.set_defaults(func=complete)
 
     # create parser for 'rm' command
     subparser = subparsers.add_parser("rm", help="Remove a Task")
     subparser.add_argument("task_name", help=helptext_task_name)
+    subparser.add_argument(
+        "-l",
+        "--list",
+        help="Specify the list name explicitly (allows task names with slashes)",
+    )
     subparser.set_defaults(func=rm)
 
     return parser
