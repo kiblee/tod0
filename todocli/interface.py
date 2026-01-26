@@ -187,7 +187,9 @@ class Tod0GUI:
         ]
 
         # Highlight first folder
-        self.left_window.content.children[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
+        self.left_window.content.children[self.list_focus_idx].style = (
+            Tod0GUI.COLOR_LIST
+        )
         # Reset scroll position
         self.left_window.vertical_scroll = 0
 
