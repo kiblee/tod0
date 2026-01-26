@@ -16,6 +16,10 @@ jobs:
           command: |
             pip install -e .
             python3 tests/test_datetime_parser.py
+            python3 tests/test_task_names_with_slashes.py
+            python3 tests/test_cli_commands.py
+            python3 tests/test_models.py
+            python3 tests/test_wrapper.py
           name: run_tests
 
   python_lint:
