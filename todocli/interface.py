@@ -113,7 +113,11 @@ class Tod0GUI:
         )
 
         self.prompt_window = self.DEFAULT_PROMPT_WINDOW
-        self.left_window = HSplit([Window()], align=VerticalAlign.TOP, padding=0)
+        self.left_window = ScrollablePane(
+            HSplit([Window()], align=VerticalAlign.TOP, padding=0),
+            keep_cursor_visible=False,
+            keep_focused_window_visible=False,
+        )
         self.right_window = ScrollablePane(
             HSplit([Window()], align=VerticalAlign.TOP, padding=0)
         )
@@ -178,12 +182,14 @@ class Tod0GUI:
             self.lists = wrapper.get_lists()
 
         # Layout interface
-        self.left_window.children = [
+        self.left_window.content.children = [
             Window(FormattedTextControl(f.display_name), width=50) for f in self.lists
         ]
 
         # Highlight first folder
-        self.left_window.children[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
+        self.left_window.content.children[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
+        # Reset scroll position
+        self.left_window.vertical_scroll = 0
 
     def load_tasks(self):
         """
@@ -294,12 +300,15 @@ class Tod0GUI:
 
         def move_selection(direction):
             if self.is_focus_on_list:
-                list_window = self.left_window.children
+                list_window = self.left_window.content.children
                 list_window[self.list_focus_idx].style = ""
                 next_idx = self.list_focus_idx + direction
                 next_idx = next_idx % len(self.lists)  # loop through list
                 self.list_focus_idx = next_idx
                 list_window[self.list_focus_idx].style = Tod0GUI.COLOR_LIST
+                # Manually control scrolling for left pane
+                # Assume each item is 1 line tall
+                self.left_window.vertical_scroll = max(0, self.list_focus_idx - 5)
             else:
                 if self.tasks_ui:
                     self.tasks_ui[self.task_focus_idx].style = ""
