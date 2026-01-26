@@ -139,7 +139,9 @@ def complete_task(
     return True if response.ok else response.raise_for_status()
 
 
-def complete_tasks(list_id, task_ids=[]):
+def complete_tasks(list_id, task_ids=None):
+    if task_ids is None:
+        task_ids = []
     body = {"requests": []}
     for task_id in task_ids:
         body["requests"].append(
