@@ -5,7 +5,6 @@ import todocli
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 
-
 DATE_FORMAT = "%Y%m%d"
 
 
