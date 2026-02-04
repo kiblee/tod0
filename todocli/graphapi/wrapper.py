@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Union
 
 from todocli.models.todolist import TodoList
-from todocli.models.todotask import Task, TaskStatus
+from todocli.models.todotask import Task, TaskImportance, TaskStatus
 from todocli.graphapi.oauth import get_oauth_session
 
 from todocli.utils.datetime_util import datetime_to_api_timestamp
@@ -91,6 +91,7 @@ def create_task(
     list_name: str | None = None,
     list_id: str | None = None,
     reminder_datetime: datetime | None = None,
+    important: bool = False,
 ):
     assert (list_name is not None) or (
         list_id is not None
@@ -104,6 +105,7 @@ def create_task(
     request_body = {
         "title": task_name,
         "reminderDateTime": datetime_to_api_timestamp(reminder_datetime),
+        "importance": TaskImportance.HIGH if important else TaskImportance.NORMAL,
     }
     session = get_oauth_session()
     response = session.post(endpoint, json=request_body)
