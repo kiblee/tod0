@@ -181,11 +181,41 @@ def get_list_id_by_name(list_name):
         raise ListNotFound(list_name)
 
 
+def _escape_odata_string(value: str) -> str:
+    """Escape a string for use in an OData $filter expression embedded in a URL.
+
+    Single quotes are doubled per OData spec.
+
+    Certain characters have special meaning in URLs and are not
+    percent-encoded by the HTTP client when they appear in a
+    raw query string:
+      '#' — fragment identifier (truncates the URL)
+      '&' — query-parameter separator
+      '+' — interpreted as space in query strings
+
+    These must be double-percent-encoded so that the first decode
+    pass (HTTP/transport layer) yields the standard percent-encoded
+    form, and the second pass (OData parser) yields the literal
+    character.  E.g. '#' → '%2523' → '%23' → '#'.
+
+    Reference: https://learn.microsoft.com/en-us/answers/questions/
+    432875/how-do-you-escape-the-octothorpe-number-pound-hashtag-
+    symbol-in-a-graph-api-odata-search-string
+    """
+    return (
+        value.replace("'", "''")
+        .replace("#", "%2523")
+        .replace("&", "%2526")
+        .replace("+", "%252B")
+    )
+
+
 def get_task_id_by_name(list_name: str, task_name: str):
     if isinstance(task_name, str):
         try:
             list_id = get_list_id_by_name(list_name)
-            endpoint = f"{BASE_URL}/{list_id}/tasks?$filter=title eq '{task_name}'"
+            escaped_name = _escape_odata_string(task_name)
+            endpoint = f"{BASE_URL}/{list_id}/tasks?$filter=title eq '{escaped_name}'"
             session = get_oauth_session()
             response = session.get(endpoint)
             response_value = parse_response(response)
