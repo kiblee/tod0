@@ -66,6 +66,57 @@ class TestCLIArgumentParsing(unittest.TestCase):
         self.assertEqual(args.list, "personal")
         self.assertEqual(args.reminder, "9:00")
 
+    def test_new_command_with_due(self):
+        """Test 'new' command with -d flag"""
+        args = self.parser.parse_args(["new", "-d", "tomorrow", "buy milk"])
+        self.assertEqual(args.task_name, "buy milk")
+        self.assertEqual(args.due, "tomorrow")
+
+    def test_new_command_with_due_long(self):
+        """Test 'new' command with --due flag"""
+        args = self.parser.parse_args(["new", "--due", "2026-01-15", "buy milk"])
+        self.assertEqual(args.task_name, "buy milk")
+        self.assertEqual(args.due, "2026-01-15")
+
+    def test_new_command_with_recurrence(self):
+        """Test 'new' command with -R flag"""
+        args = self.parser.parse_args(["new", "-R", "daily", "buy milk"])
+        self.assertEqual(args.task_name, "buy milk")
+        self.assertEqual(args.recurrence, "daily")
+
+    def test_new_command_with_recurrence_long(self):
+        """Test 'new' command with --recurrence flag"""
+        args = self.parser.parse_args(["new", "--recurrence", "weekly", "buy milk"])
+        self.assertEqual(args.task_name, "buy milk")
+        self.assertEqual(args.recurrence, "weekly")
+
+    def test_new_command_without_recurrence(self):
+        """Test 'new' command defaults recurrence to None"""
+        args = self.parser.parse_args(["new", "buy milk"])
+        self.assertIsNone(args.recurrence)
+
+    def test_new_command_with_all_flags_including_recurrence(self):
+        """Test 'new' command with -l, -r, -d, and -R flags"""
+        args = self.parser.parse_args(
+            [
+                "new",
+                "-l",
+                "personal",
+                "-r",
+                "9:00",
+                "-d",
+                "tomorrow",
+                "-R",
+                "daily",
+                "buy milk",
+            ]
+        )
+        self.assertEqual(args.task_name, "buy milk")
+        self.assertEqual(args.list, "personal")
+        self.assertEqual(args.reminder, "9:00")
+        self.assertEqual(args.due, "tomorrow")
+        self.assertEqual(args.recurrence, "daily")
+
     def test_newl_command(self):
         """Test 'newl' command for creating lists"""
         args = self.parser.parse_args(["newl", "shopping"])

@@ -9,6 +9,10 @@ from todocli.utils.datetime_util import (
     TimeExpressionNotRecognized,
     ErrorParsingTime,
 )
+from todocli.utils.recurrence_util import (
+    parse_recurrence,
+    InvalidRecurrenceExpression,
+)
 
 
 class InvalidTaskPath(Exception):
@@ -70,7 +74,20 @@ def new(args):
     if reminder_date_time_str is not None:
         reminder_datetime = parse_datetime(reminder_date_time_str)
 
-    wrapper.create_task(name, list_name=task_list, reminder_datetime=reminder_datetime)
+    due_date_time_str = args.due
+    due_datetime = None
+    if due_date_time_str is not None:
+        due_datetime = parse_datetime(due_date_time_str)
+
+    recurrence = parse_recurrence(args.recurrence)
+
+    wrapper.create_task(
+        name,
+        list_name=task_list,
+        reminder_datetime=reminder_datetime,
+        due_datetime=due_datetime,
+        recurrence=recurrence,
+    )
 
 
 def newl(args):
@@ -136,6 +153,8 @@ def setup_parser():
     subparser = subparsers.add_parser("new", help="Add a new task")
     subparser.add_argument("task_name", help=helptext_task_name)
     subparser.add_argument("-r", "--reminder")
+    subparser.add_argument("-d", "--due")
+    subparser.add_argument("-R", "--recurrence")
     subparser.add_argument(
         "-l",
         "--list",
@@ -211,6 +230,9 @@ def main():
                 print(e.message)
                 error_occurred = True
             except ErrorParsingTime as e:
+                print(e.message)
+                error_occurred = True
+            except InvalidRecurrenceExpression as e:
                 print(e.message)
                 error_occurred = True
             finally:
