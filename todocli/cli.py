@@ -66,11 +66,20 @@ def new(args):
 
     reminder_date_time_str = args.reminder
     reminder_datetime = None
-
     if reminder_date_time_str is not None:
         reminder_datetime = parse_datetime(reminder_date_time_str)
 
-    wrapper.create_task(name, list_name=task_list, reminder_datetime=reminder_datetime)
+    due_date_time_str = args.due
+    due_datetime = None
+    if due_date_time_str is not None:
+        due_datetime = parse_datetime(due_date_time_str)
+
+    wrapper.create_task(
+        name,
+        list_name=task_list,
+        reminder_datetime=reminder_datetime,
+        due_datetime=due_datetime,
+    )
 
 
 def newl(args):
@@ -136,6 +145,7 @@ def setup_parser():
     subparser = subparsers.add_parser("new", help="Add a new task")
     subparser.add_argument("task_name", help=helptext_task_name)
     subparser.add_argument("-r", "--reminder")
+    subparser.add_argument("-d", "--due")
     subparser.add_argument(
         "-l",
         "--list",

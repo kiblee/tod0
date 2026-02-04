@@ -91,6 +91,7 @@ def create_task(
     list_name: str | None = None,
     list_id: str | None = None,
     reminder_datetime: datetime | None = None,
+    due_datetime: datetime | None = None,
 ):
     assert (list_name is not None) or (
         list_id is not None
@@ -104,6 +105,7 @@ def create_task(
     request_body = {
         "title": task_name,
         "reminderDateTime": datetime_to_api_timestamp(reminder_datetime),
+        "dueDateTime": datetime_to_api_timestamp(due_datetime),
     }
     session = get_oauth_session()
     response = session.post(endpoint, json=request_body)
