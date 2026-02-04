@@ -16,6 +16,25 @@ class TaskImportance(str, Enum):
     HIGH = "high"
 
 
+class RecurrencePatternType(str, Enum):
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    ABSOLUTE_MONTHLY = "absoluteMonthly"
+    RELATIVE_MONTHLY = "relativeMonthly"
+    ABSOLUTE_YEARLY = "absoluteYearly"
+    RELATIVE_YEARLY = "relativeYearly"
+
+
+class DayOfWeek(str, Enum):
+    MONDAY = "monday"
+    TUESDAY = "tuesday"
+    WEDNESDAY = "wednesday"
+    THURSDAY = "thursday"
+    FRIDAY = "friday"
+    SATURDAY = "saturday"
+    SUNDAY = "sunday"
+
+
 class Task:
     def __init__(self, query_result):
         self.title = query_result["title"]
