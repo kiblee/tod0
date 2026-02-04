@@ -70,7 +70,12 @@ def new(args):
     if reminder_date_time_str is not None:
         reminder_datetime = parse_datetime(reminder_date_time_str)
 
-    wrapper.create_task(name, list_name=task_list, reminder_datetime=reminder_datetime)
+    wrapper.create_task(
+        name,
+        list_name=task_list,
+        reminder_datetime=reminder_datetime,
+        important=args.important,
+    )
 
 
 def newl(args):
@@ -136,6 +141,7 @@ def setup_parser():
     subparser = subparsers.add_parser("new", help="Add a new task")
     subparser.add_argument("task_name", help=helptext_task_name)
     subparser.add_argument("-r", "--reminder")
+    subparser.add_argument("-I", "--important", action="store_true")
     subparser.add_argument(
         "-l",
         "--list",

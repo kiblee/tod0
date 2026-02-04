@@ -66,6 +66,33 @@ class TestCLIArgumentParsing(unittest.TestCase):
         self.assertEqual(args.list, "personal")
         self.assertEqual(args.reminder, "9:00")
 
+    def test_new_command_with_important(self):
+        """Test 'new' command with -I flag"""
+        args = self.parser.parse_args(["new", "-I", "buy milk"])
+        self.assertEqual(args.task_name, "buy milk")
+        self.assertTrue(args.important)
+
+    def test_new_command_with_important_long(self):
+        """Test 'new' command with --important flag"""
+        args = self.parser.parse_args(["new", "--important", "buy milk"])
+        self.assertEqual(args.task_name, "buy milk")
+        self.assertTrue(args.important)
+
+    def test_new_command_without_important(self):
+        """Test 'new' command defaults important to False"""
+        args = self.parser.parse_args(["new", "buy milk"])
+        self.assertFalse(args.important)
+
+    def test_new_command_with_all_flags_including_important(self):
+        """Test 'new' command with -l, -r, and -I flags"""
+        args = self.parser.parse_args(
+            ["new", "-l", "personal", "-r", "9:00", "-I", "buy milk"]
+        )
+        self.assertEqual(args.task_name, "buy milk")
+        self.assertEqual(args.list, "personal")
+        self.assertEqual(args.reminder, "9:00")
+        self.assertTrue(args.important)
+
     def test_newl_command(self):
         """Test 'newl' command for creating lists"""
         args = self.parser.parse_args(["newl", "shopping"])
