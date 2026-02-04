@@ -57,8 +57,15 @@ def ls(args):
 
 def lst(args):
     tasks = wrapper.get_tasks(list_name=args.list_name)
-    tasks_titles = [x.title for x in tasks]
-    print_list(tasks_titles)
+    for i, task in enumerate(tasks):
+        print(f"[{i}]\t{task.title}")
+        if args.steps:
+            items = wrapper.get_checklist_items(
+                list_name=args.list_name, task_name=task.title
+            )
+            for item in items:
+                check = "x" if item.is_checked else " "
+                print(f"    [{check}] {item.display_name}")
 
 
 def new(args):
@@ -94,6 +101,44 @@ def rm(args):
     wrapper.remove_task(task_list, try_parse_as_int(name))
 
 
+def new_step(args):
+    task_list, task_name = parse_task_path(args.task_name, getattr(args, "list", None))
+    wrapper.create_checklist_item(
+        step_name=args.step_name,
+        list_name=task_list,
+        task_name=try_parse_as_int(task_name),
+    )
+
+
+def list_steps(args):
+    task_list, task_name = parse_task_path(args.task_name, getattr(args, "list", None))
+    items = wrapper.get_checklist_items(
+        list_name=task_list,
+        task_name=try_parse_as_int(task_name),
+    )
+    for i, item in enumerate(items):
+        check = "x" if item.is_checked else " "
+        print(f"[{i}] [{check}] {item.display_name}")
+
+
+def complete_step(args):
+    task_list, task_name = parse_task_path(args.task_name, getattr(args, "list", None))
+    wrapper.complete_checklist_item(
+        list_name=task_list,
+        task_name=try_parse_as_int(task_name),
+        step_name=try_parse_as_int(args.step_name),
+    )
+
+
+def rm_step(args):
+    task_list, task_name = parse_task_path(args.task_name, getattr(args, "list", None))
+    wrapper.delete_checklist_item(
+        list_name=task_list,
+        task_name=try_parse_as_int(task_name),
+        step_name=try_parse_as_int(args.step_name),
+    )
+
+
 helptext_task_name = """
         Specify the task.
         Can be one of the following:
@@ -103,6 +148,11 @@ helptext_task_name = """
         list_name/task_number
 
         Use --list flag to specify the list explicitly, allowing task names with slashes (e.g., URLs).
+        """
+
+helptext_step_name = """
+        Specify the step (checklist item).
+        Can be step_name (string) or step_number (index shown in list-steps output).
         """
 
 
@@ -129,6 +179,12 @@ def setup_parser():
         help="This optional argument specifies the list from which the tasks are displayed."
         "If this parameter is omitted, \
                                 all tasks from the default task list will be displayed",
+    )
+    subparser.add_argument(
+        "-s",
+        "--steps",
+        action="store_true",
+        help="Display checklist items (steps) for each task",
     )
     subparser.set_defaults(func=lst)
 
@@ -168,6 +224,53 @@ def setup_parser():
     )
     subparser.set_defaults(func=rm)
 
+    # create parser for 'new-step' command
+    subparser = subparsers.add_parser(
+        "new-step", help="Add a step (checklist item) to a task"
+    )
+    subparser.add_argument("task_name", help=helptext_task_name)
+    subparser.add_argument("step_name", help="Description of the step to create")
+    subparser.add_argument(
+        "-l",
+        "--list",
+        help="Specify the list name explicitly (allows task names with slashes)",
+    )
+    subparser.set_defaults(func=new_step)
+
+    # create parser for 'list-steps' command
+    subparser = subparsers.add_parser(
+        "list-steps", help="Display steps (checklist items) of a task"
+    )
+    subparser.add_argument("task_name", help=helptext_task_name)
+    subparser.add_argument(
+        "-l",
+        "--list",
+        help="Specify the list name explicitly (allows task names with slashes)",
+    )
+    subparser.set_defaults(func=list_steps)
+
+    # create parser for 'complete-step' command
+    subparser = subparsers.add_parser("complete-step", help="Mark a step as checked")
+    subparser.add_argument("task_name", help=helptext_task_name)
+    subparser.add_argument("step_name", help=helptext_step_name)
+    subparser.add_argument(
+        "-l",
+        "--list",
+        help="Specify the list name explicitly (allows task names with slashes)",
+    )
+    subparser.set_defaults(func=complete_step)
+
+    # create parser for 'rm-step' command
+    subparser = subparsers.add_parser("rm-step", help="Remove a step from a task")
+    subparser.add_argument("task_name", help=helptext_task_name)
+    subparser.add_argument("step_name", help=helptext_step_name)
+    subparser.add_argument(
+        "-l",
+        "--list",
+        help="Specify the list name explicitly (allows task names with slashes)",
+    )
+    subparser.set_defaults(func=rm_step)
+
     return parser
 
 
@@ -205,6 +308,12 @@ def main():
                 print(e.message)
                 error_occurred = True
             except InvalidTaskPath as e:
+                print(e.message)
+                error_occurred = True
+            except wrapper.StepNotFoundByName as e:
+                print(e.message)
+                error_occurred = True
+            except wrapper.StepNotFoundByIndex as e:
                 print(e.message)
                 error_occurred = True
             except TimeExpressionNotRecognized as e:

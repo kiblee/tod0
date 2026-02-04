@@ -58,8 +58,9 @@ Usage:
         'COMMAND' can be one of the following values:
             ls                  Display all lists  
             
-            lst <list_name>     Display all tasks from list
+            lst <list_name> [-s] Display all tasks from list
                 list_name       Name of the list
+                -s, --steps     Also display checklist items (steps) for each task
                 
             new <task> [-r time]
                                 Create a new task
@@ -74,6 +75,24 @@ Usage:
                
             rm <task>           Remove a task
                 task            Task to remove. See 'Specifying a task' for details.
+
+            new-step <task> <step>
+                                Add a step (checklist item) to a task
+                task            Task to add step to. See 'Specifying a task' for details.
+                step            Description of the step to create.
+
+            list-steps <task>   Display steps (checklist items) of a task
+                task            Task to display steps for. See 'Specifying a task' for details.
+
+            complete-step <task> <step>
+                                Mark a step as checked
+                task            Task containing the step. See 'Specifying a task' for details.
+                step            Step to complete (name or index number).
+
+            rm-step <task> <step>
+                                Remove a step from a task
+                task            Task containing the step. See 'Specifying a task' for details.
+                step            Step to remove (name or index number).
                    
     OPTIONS
         -h, --help
@@ -141,3 +160,4 @@ Features
 - View folders and tasks
 - Create folders and tasks
 - Mark tasks as complete
+- Manage subtasks (checklist items / steps)
