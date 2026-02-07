@@ -22,6 +22,9 @@ if __name__ == "__main__":
     suite.addTests(loader.loadTestsFromName("tests.test_cli_commands"))
     suite.addTests(loader.loadTestsFromName("tests.test_models"))
     suite.addTests(loader.loadTestsFromName("tests.test_wrapper"))
+    suite.addTests(loader.loadTestsFromName("tests.test_checklist_item_model"))
+    suite.addTests(loader.loadTestsFromName("tests.test_checklist_wrapper"))
+    suite.addTests(loader.loadTestsFromName("tests.test_checklist_cli"))
 
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)

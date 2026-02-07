@@ -9,6 +9,7 @@ from typing import Union
 
 from todocli.models.todolist import TodoList
 from todocli.models.todotask import Task, TaskStatus
+from todocli.models.checklistitem import ChecklistItem
 from todocli.graphapi.oauth import get_oauth_session
 
 from todocli.utils.datetime_util import datetime_to_api_timestamp
@@ -39,6 +40,22 @@ class TaskNotFoundByIndex(Exception):
             task_index, list_name
         )
         super(TaskNotFoundByIndex, self).__init__(self.message)
+
+
+class StepNotFoundByName(Exception):
+    def __init__(self, step_name, task_name):
+        self.message = "Step with name '{}' could not be found in task '{}'".format(
+            step_name, task_name
+        )
+        super(StepNotFoundByName, self).__init__(self.message)
+
+
+class StepNotFoundByIndex(Exception):
+    def __init__(self, step_index, task_name):
+        self.message = "Step with index '{}' could not be found in task '{}'".format(
+            step_index, task_name
+        )
+        super(StepNotFoundByIndex, self).__init__(self.message)
 
 
 def parse_response(response):
@@ -206,5 +223,115 @@ def get_task_id_by_name(list_name: str, task_name: str):
     #        return tasks[task_list_position].id
     #    except IndexError:
     #        raise TaskNotFoundByIndex(task_list_position, list_name)
+    else:
+        raise
+
+
+def get_checklist_items(
+    list_name: str = None,
+    task_name: Union[str, int] = None,
+    list_id: str = None,
+    task_id: str = None,
+):
+    assert (list_name is not None) or (
+        list_id is not None
+    ), "You must provide list_name or list_id"
+    assert (task_name is not None) or (
+        task_id is not None
+    ), "You must provide task_name or task_id"
+
+    if list_id is None:
+        list_id = get_list_id_by_name(list_name)
+    if task_id is None:
+        task_id = get_task_id_by_name(list_name, task_name)
+
+    endpoint = f"{BASE_URL}/{list_id}/tasks/{task_id}/checklistItems"
+    session = get_oauth_session()
+    response = session.get(endpoint)
+    response_value = parse_response(response)
+    return [ChecklistItem(x) for x in response_value]
+
+
+def create_checklist_item(
+    step_name: str,
+    list_name: str = None,
+    task_name: Union[str, int] = None,
+    list_id: str = None,
+    task_id: str = None,
+):
+    assert (list_name is not None) or (
+        list_id is not None
+    ), "You must provide list_name or list_id"
+    assert (task_name is not None) or (
+        task_id is not None
+    ), "You must provide task_name or task_id"
+
+    if list_id is None:
+        list_id = get_list_id_by_name(list_name)
+    if task_id is None:
+        task_id = get_task_id_by_name(list_name, task_name)
+
+    endpoint = f"{BASE_URL}/{list_id}/tasks/{task_id}/checklistItems"
+    request_body = {"displayName": step_name}
+    session = get_oauth_session()
+    response = session.post(endpoint, json=request_body)
+    return True if response.ok else response.raise_for_status()
+
+
+def complete_checklist_item(
+    list_name: str, task_name: Union[str, int], step_name: Union[str, int]
+):
+    list_id = get_list_id_by_name(list_name)
+    task_id = get_task_id_by_name(list_name, task_name)
+    step_id = get_step_id(
+        list_name, task_name, step_name, list_id=list_id, task_id=task_id
+    )
+
+    endpoint = f"{BASE_URL}/{list_id}/tasks/{task_id}/checklistItems/{step_id}"
+    request_body = {"isChecked": True}
+    session = get_oauth_session()
+    response = session.patch(endpoint, json=request_body)
+    return True if response.ok else response.raise_for_status()
+
+
+def delete_checklist_item(
+    list_name: str, task_name: Union[str, int], step_name: Union[str, int]
+):
+    list_id = get_list_id_by_name(list_name)
+    task_id = get_task_id_by_name(list_name, task_name)
+    step_id = get_step_id(
+        list_name, task_name, step_name, list_id=list_id, task_id=task_id
+    )
+
+    endpoint = f"{BASE_URL}/{list_id}/tasks/{task_id}/checklistItems/{step_id}"
+    session = get_oauth_session()
+    response = session.delete(endpoint)
+    return True if response.ok else response.raise_for_status()
+
+
+def get_step_id(
+    list_name: str,
+    task_name: Union[str, int],
+    step_name: Union[str, int],
+    list_id: str = None,
+    task_id: str = None,
+):
+    if list_id is None:
+        list_id = get_list_id_by_name(list_name)
+    if task_id is None:
+        task_id = get_task_id_by_name(list_name, task_name)
+
+    items = get_checklist_items(list_id=list_id, task_id=task_id)
+
+    if isinstance(step_name, int):
+        try:
+            return items[step_name].id
+        except IndexError:
+            raise StepNotFoundByIndex(step_name, task_name)
+    elif isinstance(step_name, str):
+        for item in items:
+            if item.display_name == step_name:
+                return item.id
+        raise StepNotFoundByName(step_name, task_name)
     else:
         raise
