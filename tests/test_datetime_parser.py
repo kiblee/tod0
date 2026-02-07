@@ -67,7 +67,11 @@ class TestDatetimeParser(unittest.TestCase):
             ("24.6. 12:00", datetime(2020, 6, 24, 9, 0), datetime(2020, 6, 24, 12, 0)),
             ("6.6. 06:06", datetime(2020, 6, 5, 9, 0), datetime(2020, 6, 6, 6, 6)),
             ("6.6. 6:06", datetime(2020, 6, 5, 9, 0), datetime(2020, 6, 6, 6, 6)),
-            ("2025-01-15 17:00", datetime(2020, 6, 5, 9, 0), datetime(2025, 1, 15, 17, 0)),
+            (
+                "2025-01-15 17:00",
+                datetime(2020, 6, 5, 9, 0),
+                datetime(2025, 1, 15, 17, 0),
+            ),
             ("morning", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 7, 0)),
             ("evening", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 1, 18, 0)),
             ("tomorrow", datetime(2020, 1, 1, 9, 0), datetime(2020, 1, 2, 7, 0)),
