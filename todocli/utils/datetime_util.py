@@ -123,6 +123,32 @@ def parse_datetime(datetime_str: str):
                 )
             )
 
+        if re.match(r"([0-9]{4}-[0-9]{2}-[0-9]{2})$", datetime_str):
+            """e.g. 2025-01-15"""
+            dt = datetime.strptime(datetime_str, "%Y-%m-%d")
+            return datetime.now().replace(
+                year=dt.year,
+                month=dt.month,
+                day=dt.day,
+                hour=7,
+                minute=0,
+                second=0,
+                microsecond=0,
+            )
+
+        if re.match(r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{1,2}:[0-9]{2})$", datetime_str):
+            """e.g. 2025-01-15 17:00"""
+            dt = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
+            return datetime.now().replace(
+                year=dt.year,
+                month=dt.month,
+                day=dt.day,
+                hour=dt.hour,
+                minute=dt.minute,
+                second=0,
+                microsecond=0,
+            )
+
         if re.match(
             r"([0-9]{1,2}\.[0-9]{1,2}\.(([0-9]{4})|([0-9]{2})))$",
             datetime_str,
