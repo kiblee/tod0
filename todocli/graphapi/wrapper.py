@@ -207,4 +207,4 @@ def get_task_id_by_name(list_name: str, task_name: str):
     #    except IndexError:
     #        raise TaskNotFoundByIndex(task_list_position, list_name)
     else:
-        raise
+        raise TaskNotFoundByIndex(task_name, list_name)
