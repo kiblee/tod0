@@ -8,6 +8,7 @@ from todocli.graphapi.wrapper import (
     TaskNotFoundByIndex,
     BASE_URL,
     BATCH_URL,
+    get_task_id_by_name,
 )
 
 
@@ -41,6 +42,16 @@ class TestWrapperExceptions(unittest.TestCase):
         self.assertIn(str(task_index), exc.message)
         self.assertIn(list_name, exc.message)
         self.assertIn("could not be found", exc.message)
+
+
+class TestGetTaskIdByName(unittest.TestCase):
+    """Test get_task_id_by_name index handling (complete/rm by task number)"""
+
+    def test_int_index_raises_task_not_found_by_index(self):
+        """An int task index must raise TaskNotFoundByIndex (handled by the
+        CLI into a clean message + exit 1), never a bare RuntimeError."""
+        with self.assertRaises(TaskNotFoundByIndex):
+            get_task_id_by_name("Tasks", 0)
 
 
 class TestWrapperConstants(unittest.TestCase):
